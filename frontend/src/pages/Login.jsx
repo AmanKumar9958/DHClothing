@@ -43,7 +43,8 @@ const Login = () => {
               resetForm()
               setCurrentState('Login')
             } else {
-              toast.error(response.data.message)
+              toast.error(response.data.message || 'Invalid OTP. Please try again.')
+              setOtp('')
             }
           }
         } else {
@@ -61,7 +62,8 @@ const Login = () => {
 
       } catch (error) {
         console.log(error)
-        toast.error(error.message)
+        const message = error.response?.data?.message || error.message || 'Something went wrong'
+        toast.error(message)
       }
   }
 
