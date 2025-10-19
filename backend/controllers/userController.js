@@ -190,4 +190,38 @@ export const verifySignup = async (req, res) => {
     }
 };
 
+export const getProfile = async (req, res) => {
+    try {
+        const userId = req.userId || req.body.userId;
+        if (!userId) {
+            return res.json({ success: false, message: "Not Authorized" });
+        }
+
+        const user = await userModel.findById(userId).lean();
+        if (!user) {
+            return res.json({ success: false, message: "User not found" });
+        }
+
+        const cartData = user.cartData || {};
+        const cartCount = Object.values(cartData).reduce((total, sizes) => {
+            if (!sizes) return total;
+            return total + Object.values(sizes).reduce((sum, qty) => sum + (qty || 0), 0);
+        }, 0);
+
+        const profile = {
+            name: user.name,
+            email: user.email,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+            cartCount,
+            cartData,
+        };
+
+        res.json({ success: true, user: profile });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+};
+
 export { loginUser, registerUser, adminLogin };

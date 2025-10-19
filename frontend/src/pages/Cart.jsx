@@ -17,6 +17,11 @@ const Cart = () => {
       for (const items in cartItems) {
         for (const item in cartItems[items]) {
           if (cartItems[items][item] > 0) {
+            const productExists = products.some((product) => product._id === items);
+            if (!productExists) {
+              updateQuantity(items, item, 0);
+              continue;
+            }
             tempData.push({
               _id: items,
               size: item,
@@ -27,7 +32,7 @@ const Cart = () => {
       }
       setCartData(tempData);
     }
-  }, [cartItems, products])
+  }, [cartItems, products, updateQuantity])
 
   return (
     <div className='border-t pt-14'>
@@ -41,6 +46,9 @@ const Cart = () => {
           cartData.map((item, index) => {
 
             const productData = products.find((product) => product._id === item._id);
+            if (!productData) {
+              return null;
+            }
 
             return (
               <div key={index} className='py-4 border-t border-b text-gray-700 grid grid-cols-[4fr_0.5fr_0.5fr] sm:grid-cols-[4fr_2fr_0.5fr] items-center gap-4'>

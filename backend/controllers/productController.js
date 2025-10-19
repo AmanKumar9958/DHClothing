@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from "cloudinary"
 import productModel from "../models/productModel.js"
+import userModel from "../models/userModel.js"
 
 // function for add product
 const addProduct = async (req, res) => {
@@ -63,8 +64,16 @@ const listProducts = async (req, res) => {
 const removeProduct = async (req, res) => {
     try {
         
-        await productModel.findByIdAndDelete(req.body.id)
-        res.json({success:true,message:"Product Removed"})
+    const { id } = req.body
+
+    await productModel.findByIdAndDelete(id)
+
+    // Remove deleted product from every user's cart
+    const unsetField = {}
+    unsetField[`cartData.${id}`] = ""
+    await userModel.updateMany({}, { $unset: unsetField })
+
+    res.json({success:true,message:"Product Removed"})
 
     } catch (error) {
         console.log(error)
