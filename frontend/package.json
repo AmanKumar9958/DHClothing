@@ -1,6 +1,7 @@
 {
   "name": "frontend",
   "private": true,
+  "homepage": "http://dhclothing.in",
   "version": "0.0.0",
   "type": "module",
   "scripts": {

@@ -16,7 +16,10 @@ connectCloudinary()
 
 // middlewares
 app.use(express.json())
-app.use(cors())
+const corsOptions = {
+    origin: 'https://dhclothing.in'
+};
+app.use(cors(corsOptions));
 
 // api endpoints
 app.use('/api/user',userRouter)
