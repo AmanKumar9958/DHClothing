@@ -14,7 +14,11 @@ const createToken = (id) => {
 const loginUser = async (req, res) => {
     try {
 
-        const { email, password } = req.body;
+        const { email, password } = req.body || {};
+
+        if (!email || !password) {
+            return res.json({ success: false, message: "Email and password are required" });
+        }
 
         const user = await userModel.findOne({ email });
 
@@ -44,7 +48,11 @@ const loginUser = async (req, res) => {
 const registerUser = async (req, res) => {
     try {
 
-        const { name, email, password } = req.body;
+        const { name, email, password } = req.body || {};
+
+        if (!name || !email || !password) {
+            return res.json({ success: false, message: "Name, email and password are required" });
+        }
 
         // checking user already exists or not
         const exists = await userModel.findOne({ email });
@@ -85,8 +93,11 @@ const registerUser = async (req, res) => {
 // Route for admin login
 const adminLogin = async (req, res) => {
     try {
-        
-        const {email,password} = req.body
+        const { email, password } = req.body || {};
+
+        if (!email || !password) {
+            return res.json({ success: false, message: "Email and password are required" });
+        }
 
         if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
             const token = jwt.sign(email+password,process.env.JWT_SECRET);

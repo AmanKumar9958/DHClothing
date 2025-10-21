@@ -16,9 +16,27 @@ connectCloudinary()
 
 // middlewares
 app.use(express.json())
+
+// --- CORRECTED CORS CONFIGURATION ---
+// List of all frontend URLs that are allowed to access the API
+const allowedOrigins = [
+    'http://dhclothing.in',
+    'http://www.dhclothing.in',
+    'http://admin.dhclothing.in'
+];
+
 const corsOptions = {
-    origin: 'http://dhclothing.in'
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) === -1) {
+            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    }
 };
+
 app.use(cors(corsOptions));
 
 // api endpoints
