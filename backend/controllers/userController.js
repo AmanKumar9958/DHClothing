@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import userModel from "../models/userModel.js";
 import pendingUserModel from "../models/pendingUserModel.js";
+import pendingResetModel from "../models/pendingResetModel.js";
 import { sendOtpMail } from "../config/mailer.js";
 
 
@@ -236,3 +237,95 @@ export const getProfile = async (req, res) => {
 };
 
 export { loginUser, registerUser, adminLogin };
+
+// ---------- Password reset with OTP flow ----------
+// Step 1: init reset - user provides email, send OTP if user exists
+export const initPasswordReset = async (req, res) => {
+    try {
+        const { email } = req.body || {};
+        if (!email) return res.json({ success: false, message: "Email is required" });
+
+        const user = await userModel.findOne({ email });
+        if (!user) return res.json({ success: false, message: "No user found with this email" });
+
+        const otp = (Math.floor(100000 + Math.random() * 900000)).toString();
+        const otpHash = await bcrypt.hash(otp, 10);
+        const expires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        await pendingResetModel.findOneAndUpdate(
+            { email },
+            { email, otpHash, otpExpiresAt: expires, attempts: 0, verified: false },
+            { new: true, upsert: true, setDefaultsOnInsert: true }
+        );
+
+        await sendOtpMail(email, otp);
+        return res.json({ success: true, message: "OTP sent to email" });
+    } catch (error) {
+        console.log(error);
+        return res.json({ success: false, message: error.message });
+    }
+};
+
+// Step 2: verify OTP - user sends email+otp; mark verified if ok
+export const verifyResetOtp = async (req, res) => {
+    try {
+        const { email, otp } = req.body || {};
+        if (!email || !otp) return res.json({ success: false, message: "Email and OTP are required" });
+
+        const pending = await pendingResetModel.findOne({ email });
+        if (!pending) return res.json({ success: false, message: "No pending reset found" });
+
+        if (pending.otpExpiresAt < new Date()) {
+            await pendingResetModel.deleteOne({ _id: pending._id });
+            return res.json({ success: false, message: "OTP expired. Please request again." });
+        }
+
+        const match = await bcrypt.compare(otp.toString(), pending.otpHash);
+        if (!match) {
+            const attempts = (pending.attempts || 0) + 1;
+            if (attempts >= 5) {
+                await pendingResetModel.deleteOne({ _id: pending._id });
+                return res.json({ success: false, message: "Too many attempts. Please request again." });
+            }
+            await pendingResetModel.updateOne({ _id: pending._id }, { attempts });
+            return res.json({ success: false, message: "Invalid OTP" });
+        }
+
+        // mark verified so reset can proceed
+        await pendingResetModel.updateOne({ _id: pending._id }, { verified: true });
+        return res.json({ success: true, message: "OTP verified. You can reset your password now." });
+    } catch (error) {
+        console.log(error);
+        return res.json({ success: false, message: error.message });
+    }
+};
+
+// Step 3: reset password - only allowed if OTP was verified
+export const resetPassword = async (req, res) => {
+    try {
+        const { email, newPassword } = req.body || {};
+        if (!email || !newPassword) return res.json({ success: false, message: "Email and new password are required" });
+
+        if (newPassword.length < 8) return res.json({ success: false, message: "Please enter a strong password" });
+
+        const pending = await pendingResetModel.findOne({ email });
+        if (!pending || !pending.verified) return res.json({ success: false, message: "OTP not verified or request not found" });
+
+        // update user password
+        const salt = await bcrypt.genSalt(10);
+        const hashed = await bcrypt.hash(newPassword, salt);
+
+        const updated = await userModel.updateOne({ email }, { password: hashed });
+        if (updated.matchedCount === 0 && updated.nMatched === 0) {
+            // fallback for mongoose older responses
+        }
+
+        // remove pending reset
+        await pendingResetModel.deleteOne({ _id: pending._id });
+
+        return res.json({ success: true, message: "Password updated. You can login now." });
+    } catch (error) {
+        console.log(error);
+        return res.json({ success: false, message: error.message });
+    }
+};
