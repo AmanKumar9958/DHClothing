@@ -58,11 +58,18 @@ const Product = () => {
             alert("Please select a size.");
             return;
         }
-        const selectedColor = selectedVariantIndex !== null && productData.variants
-                              ? productData.variants[selectedVariantIndex].color
-                              : null; // Or handle default color if no variants
-        
-        addToCart(productData._id, size, selectedColor); // Assuming addToCart accepts (productId, size, color)
+
+        // Determine the variant identifier to pass to addToCart.
+        // The backend/frontend variant lookup supports either an explicit variant `id` field
+        // or a numeric index into the `variants` array. Prefer explicit id when present,
+        // otherwise pass the numeric index.
+        let variantId = null;
+        if (selectedVariantIndex !== null && productData.variants && productData.variants[selectedVariantIndex]) {
+            const v = productData.variants[selectedVariantIndex];
+            variantId = (v.id !== undefined && v.id !== null) ? v.id : selectedVariantIndex;
+        }
+
+        addToCart(productData._id, size, variantId);
     };
 
 
