@@ -18,7 +18,7 @@ const ShopContextProvider = (props) => {
     const navigate = useNavigate();
 
 
-    const addToCart = async (itemId, size) => {
+    const addToCart = async (itemId, size, variantId = null) => {
 
         if (!size) {
             toast.error('Select Product Size');
@@ -27,24 +27,26 @@ const ShopContextProvider = (props) => {
 
         let cartData = structuredClone(cartItems);
 
-        if (cartData[itemId]) {
-            if (cartData[itemId][size]) {
-                cartData[itemId][size] += 1;
+        // use composite item key when variant selected
+        const key = variantId ? `${itemId}::${variantId}` : itemId
+        if (cartData[key]) {
+            if (cartData[key][size]) {
+                cartData[key][size] += 1;
             }
             else {
-                cartData[itemId][size] = 1;
+                cartData[key][size] = 1;
             }
         }
         else {
-            cartData[itemId] = {};
-            cartData[itemId][size] = 1;
+            cartData[key] = {};
+            cartData[key][size] = 1;
         }
         setCartItems(cartData);
 
         if (token) {
             try {
 
-                await axios.post(backendUrl + '/api/cart/add', { itemId, size }, { headers: { token } })
+                await axios.post(backendUrl + '/api/cart/add', { itemId, size, variantId }, { headers: { token } })
 
             } catch (error) {
                 console.log(error)
@@ -94,11 +96,19 @@ const ShopContextProvider = (props) => {
     const getCartAmount = () => {
         let totalAmount = 0;
         for (const items in cartItems) {
-            let itemInfo = products.find((product) => product._id === items);
+            // items can be composite key productId::variantId
+            const [productId, variantId] = items.split('::')
+            const itemInfo = products.find((product) => product._id === productId)
             for (const item in cartItems[items]) {
                 try {
                     if (cartItems[items][item] > 0) {
-                        totalAmount += itemInfo.price * cartItems[items][item];
+                        // if variant price exists, use it
+                        let price = itemInfo.price
+                        if (variantId && itemInfo.variants) {
+                            const v = itemInfo.variants.find(vv => (vv.id && vv.id.toString() === variantId.toString()) || itemInfo.variants.indexOf(vv) === Number(variantId))
+                            if (v && v.price) price = v.price
+                        }
+                        totalAmount += price * cartItems[items][item];
                     }
                 } catch (error) {
 

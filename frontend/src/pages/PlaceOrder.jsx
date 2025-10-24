@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react'
+import { useContext, useState } from 'react'
 import Title from '../components/Title'
 import CartTotal from '../components/CartTotal'
 import { assets } from '../assets/assets'
@@ -65,7 +65,25 @@ const PlaceOrder = () => {
             for (const items in cartItems) {
                 for (const item in cartItems[items]) {
                     if (cartItems[items][item] > 0) {
-                        const itemInfo = structuredClone(products.find(product => product._id === items))
+                        // items may be composite key productId::variantId
+                        const [productId, variantId] = items.split('::')
+                        const product = structuredClone(products.find(product => product._id === productId))
+                        const itemInfo = product
+                        // attach variant info if present
+                        if (itemInfo && variantId) {
+                            const variant = itemInfo.variants && (itemInfo.variants.find(v => (v.id && v.id.toString() === variantId.toString()) ) || (itemInfo.variants[Number(variantId)]))
+                            if (variant) {
+                                itemInfo.variant = {
+                                    id: variant.id || Number(variantId),
+                                    colorName: variant.colorName,
+                                    colorHex: variant.colorHex,
+                                    sku: variant.sku
+                                }
+                                // override image and price if variant provides them
+                                if (variant.images && variant.images.length) itemInfo.image = variant.images
+                                if (variant.price) itemInfo.price = variant.price
+                            }
+                        }
                         if (itemInfo) {
                             itemInfo.size = item
                             itemInfo.quantity = cartItems[items][item]
@@ -85,7 +103,7 @@ const PlaceOrder = () => {
             switch (method) {
 
                 // API Calls for COD
-                case 'cod':
+                case 'cod': {
                     const response = await axios.post(backendUrl + '/api/order/place',orderData,{headers:{token}})
                     if (response.data.success) {
                         setCartItems({})
@@ -94,8 +112,9 @@ const PlaceOrder = () => {
                         toast.error(response.data.message)
                     }
                     break;
+                }
 
-                case 'stripe':
+                case 'stripe': {
                     const responseStripe = await axios.post(backendUrl + '/api/order/stripe',orderData,{headers:{token}})
                     if (responseStripe.data.success) {
                         const {session_url} = responseStripe.data
@@ -104,15 +123,16 @@ const PlaceOrder = () => {
                         toast.error(responseStripe.data.message)
                     }
                     break;
+                }
 
-                case 'razorpay':
-
+                case 'razorpay': {
                     const responseRazorpay = await axios.post(backendUrl + '/api/order/razorpay', orderData, {headers:{token}})
                     if (responseRazorpay.data.success) {
                         initPay(responseRazorpay.data.order)
                     }
 
                     break;
+                }
 
                 default:
                     break;

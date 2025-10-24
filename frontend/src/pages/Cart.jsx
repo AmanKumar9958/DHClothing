@@ -17,13 +17,17 @@ const Cart = () => {
       for (const items in cartItems) {
         for (const item in cartItems[items]) {
           if (cartItems[items][item] > 0) {
-            const productExists = products.some((product) => product._id === items);
+            // items may be composite key productId::variantId
+            const [productId, variantId] = items.split('::')
+            const productExists = products.some((product) => product._id === productId);
             if (!productExists) {
               updateQuantity(items, item, 0);
               continue;
             }
             tempData.push({
-              _id: items,
+              _id: items, // keep composite key so updateQuantity works
+              productId,
+              variantId,
               size: item,
               quantity: cartItems[items][item]
             })
@@ -45,20 +49,35 @@ const Cart = () => {
         {
           cartData.map((item, index) => {
 
-            const productData = products.find((product) => product._id === item._id);
+            const productData = products.find((product) => product._id === item.productId || product._id === item._id);
             if (!productData) {
               return null;
             }
+            // determine variant if composite key
+            const variantId = item.variantId
+            let variant = null
+            if (variantId && productData.variants) {
+              variant = productData.variants.find(v => (v.id && v.id.toString() === variantId.toString()) || productData.variants.indexOf(v) === Number(variantId))
+            }
+
+            const displayImage = (variant && variant.images && variant.images.length) ? variant.images[0] : (productData.image && productData.image[0])
+            const displayPrice = (variant && variant.price) ? variant.price : productData.price
 
             return (
               <div key={index} className='py-4 border-t border-b text-gray-700 grid grid-cols-[4fr_0.5fr_0.5fr] sm:grid-cols-[4fr_2fr_0.5fr] items-center gap-4'>
                 <div className=' flex items-start gap-6'>
-                  <img className='w-16 sm:w-20' src={productData.image[0]} alt="" />
+                  <img className='w-16 sm:w-20' src={displayImage} alt="" />
                   <div>
                     <p className='text-xs sm:text-lg font-medium'>{productData.name}</p>
                     <div className='flex items-center gap-5 mt-2'>
-                      <p>{currency}{productData.price}</p>
+                      <p>{currency}{displayPrice}</p>
                       <p className='px-2 sm:px-3 sm:py-1 border bg-slate-50'>{item.size}</p>
+                      {variant && (
+                        <div className='flex items-center gap-2'>
+                          <span className='w-4 h-4 rounded-full inline-block' style={{background: variant.colorHex || '#ddd'}}></span>
+                          <span className='text-sm'>{variant.colorName}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

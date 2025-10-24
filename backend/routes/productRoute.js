@@ -5,7 +5,8 @@ import adminAuth from '../middleware/adminAuth.js';
 
 const productRouter = express.Router();
 
-productRouter.post('/add',adminAuth,upload.fields([{name:'image1',maxCount:1},{name:'image2',maxCount:1},{name:'image3',maxCount:1},{name:'image4',maxCount:1}]),addProduct);
+// allow any files so admin can upload variant images as dynamic fields (e.g. variant_0_images)
+productRouter.post('/add', adminAuth, upload.any(), addProduct);
 productRouter.post('/remove',adminAuth,removeProduct);
 productRouter.post('/single',singleProduct);
 productRouter.get('/list',listProducts)
