@@ -40,7 +40,7 @@ const Orders = ({ token }) => {
       }
     } catch (error) {
       console.log(error)
-      toast.error(response.data.message)
+      toast.error(error.message)
     }
   }
 
@@ -76,6 +76,11 @@ const Orders = ({ token }) => {
                     }
                   })}
                 </div>
+                {order.couponCode && (
+                  <div className='inline-flex items-center gap-2 mt-2 px-2 py-1 rounded bg-green-50 text-green-700 border border-green-200 text-xs'>
+                    Coupon {order.couponCode} • -{currency}{order.discount || 0}
+                  </div>
+                )}
                 <p className='mt-3 mb-2 font-medium'>{order.address.firstName + " " + order.address.lastName}</p>
                 <div>
                   <p>{order.address.street + ","}</p>
@@ -85,11 +90,19 @@ const Orders = ({ token }) => {
               </div>
               <div>
                 <p className='text-sm sm:text-[15px]'>Items : {order.items.length}</p>
-                <p className='mt-3'>Method : {order.paymentMethod}</p>
-                <p>Payment : { order.payment ? 'Done' : 'Pending' }</p>
+                <p className='mt-3'>Method : <span className='inline-block px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-medium'>{order.paymentMethod}</span></p>
+                <p className='mt-1'>Coupon: <span className=' text-gray-400'>{order.couponCode || 'N/A'}</span></p>
+                {order.couponCode && (
+                  <p className=''>Discount: <span className='text-gray-800 font-medium'>{currency}{order.discount || 0}</span></p>
+                )}
+                <p>Payment : <span className={`${order.payment ? 'text-green-600' : 'text-orange-600'} font-medium`}>{ order.payment ? 'Done' : 'Pending' }</span></p>
                 <p>Date : {new Date(order.date).toLocaleDateString()}</p>
+                <p>Time: {new Date(order.date).toLocaleTimeString()}</p>
               </div>
-              <p className='text-sm sm:text-[15px]'>{currency}{order.amount}</p>
+              <div className='text-right mr-3'>
+                <p className='text-[11px] uppercase tracking-wider text-gray-400'>Payable Amount</p>
+                <p className='text-sm sm:text-[15px] font-semibold'>{currency}{order.amount}</p>
+              </div>
               <select onChange={(event)=>statusHandler(event,order._id)} value={order.status} className='p-2 font-semibold'>
                 <option value="Order Placed">Order Placed</option>
                 <option value="Packing">Packing</option>

@@ -1,6 +1,7 @@
 import orderModel from "../models/orderModel.js";
 import userModel from "../models/userModel.js";
 import couponModel from "../models/couponModel.js";
+import productModel from "../models/productModel.js";
 import Stripe from 'stripe'
 import razorpay from 'razorpay'
 
@@ -16,13 +17,48 @@ const razorpayInstance = new razorpay({
     key_secret : process.env.RAZORPAY_KEY_SECRET,
 })
 
+// Compute subtotal from items using server-side product data
+const computeSubtotalFromItems = async (items) => {
+    if (!Array.isArray(items)) return 0
+    let total = 0
+    for (const it of items) {
+        try {
+            const id = it._id || it.productId || (it.id && it.id._id)
+            if (!id) continue
+            const prod = await productModel.findById(id)
+            if (!prod) continue
+            let price = Number(prod.price) || 0
+            // try variant override if provided
+            if (it.variant && (it.variant.id || it.variant.colorName || it.variant.colorHex)) {
+                const byId = it.variant.id && Array.isArray(prod.variants) && prod.variants.find(v => (v.id && v.id.toString() === it.variant.id.toString()))
+                let variantDoc = byId
+                if (!variantDoc && Array.isArray(prod.variants)) {
+                    variantDoc = prod.variants.find(v => (
+                        (it.variant.colorHex && (v.colorHex === it.variant.colorHex)) ||
+                        (it.variant.colorName && (v.colorName === it.variant.colorName))
+                    ))
+                }
+                if (variantDoc && variantDoc.price) {
+                    price = Number(variantDoc.price)
+                }
+            }
+            const qty = Number(it.quantity) || 0
+            total += price * qty
+        } catch (e) {
+            // skip invalid rows
+        }
+    }
+    return total
+}
+
 // Placing orders using COD Method
 const placeOrder = async (req,res) => {
     try {
-        const { userId, items, amount: amountFromClient, address, couponCode } = req.body;
+        const { userId, items, address, couponCode } = req.body;
 
-        // validate coupon if provided
-        let finalAmount = Number(amountFromClient) || 0
+        // compute subtotal from items server-side
+        const subtotal = await computeSubtotalFromItems(items)
+        let finalAmount = subtotal + deliveryCharge
         let discountAmount = 0
         if (couponCode) {
             const c = await couponModel.findOne({ code: couponCode.trim().toUpperCase() })
@@ -64,11 +100,12 @@ const placeOrder = async (req,res) => {
 // Placing orders using Stripe Method
 const placeOrderStripe = async (req,res) => {
     try {
-        const { userId, items, amount: amountFromClient, address, couponCode } = req.body
+        const { userId, items, address, couponCode } = req.body
         const { origin } = req.headers;
 
-        // validate coupon if provided
-        let finalAmount = Number(amountFromClient) || 0
+        // compute subtotal from items server-side
+        const subtotal = await computeSubtotalFromItems(items)
+        let finalAmount = subtotal + deliveryCharge
         let discountAmount = 0
         if (couponCode) {
             const c = await couponModel.findOne({ code: couponCode.trim().toUpperCase() })
@@ -146,10 +183,11 @@ const verifyStripe = async (req,res) => {
 // Placing orders using Razorpay Method
 const placeOrderRazorpay = async (req,res) => {
     try {
-        const { userId, items, amount: amountFromClient, address, couponCode } = req.body
+        const { userId, items, address, couponCode } = req.body
 
-        // validate coupon if provided
-        let finalAmount = Number(amountFromClient) || 0
+        // compute subtotal from items server-side
+        const subtotal = await computeSubtotalFromItems(items)
+        let finalAmount = subtotal + deliveryCharge
         let discountAmount = 0
         if (couponCode) {
             const c = await couponModel.findOne({ code: couponCode.trim().toUpperCase() })

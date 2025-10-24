@@ -42,6 +42,8 @@ const ShopContextProvider = (props) => {
             cartData[key][size] = 1;
         }
         setCartItems(cartData);
+        // notify user
+        toast.success('Added to cart');
 
         if (token) {
             try {
@@ -79,6 +81,11 @@ const ShopContextProvider = (props) => {
         cartData[itemId][size] = quantity;
 
         setCartItems(cartData)
+
+        // toast for removal
+        if (quantity === 0) {
+            toast.success('Removed from cart')
+        }
 
         if (token) {
             try {

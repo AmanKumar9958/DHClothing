@@ -1,15 +1,14 @@
 import { useContext, useState } from 'react'
 import Title from '../components/Title'
 import CartTotal from '../components/CartTotal'
-import { assets } from '../assets/assets'
 import { ShopContext } from '../context/ShopContext'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 
 const PlaceOrder = () => {
 
-    const [method, setMethod] = useState('razorpay');
-    const { navigate, backendUrl, token, cartItems, setCartItems, getCartAmount, delivery_fee, products, currency } = useContext(ShopContext);
+    const [method, setMethod] = useState('cod');
+    const { navigate, backendUrl, token, cartItems, setCartItems, delivery_fee, products, currency } = useContext(ShopContext);
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -29,6 +28,41 @@ const PlaceOrder = () => {
         const name = event.target.name
         const value = event.target.value
         setFormData(data => ({ ...data, [name]: value }))
+    }
+
+    // Build order items and compute subtotal from cart + products
+    const buildOrderItemsAndSubtotal = () => {
+        let orderItems = []
+        let subtotal = 0
+        for (const items in cartItems) {
+            for (const item in cartItems[items]) {
+                if (cartItems[items][item] > 0) {
+                    const [productId, variantId] = items.split('::')
+                    const product = structuredClone(products.find(p => p._id === productId))
+                    if (!product) continue
+                    if (variantId) {
+                        const variant = product.variants && (product.variants.find(v => (v.id && v.id.toString() === variantId.toString())) || (product.variants[Number(variantId)]))
+                        if (variant) {
+                            product.variant = {
+                                id: variant.id || Number(variantId),
+                                colorName: variant.colorName || variant.color || variant.name || '',
+                                colorHex: variant.colorHex || variant.color || variant.hex || '',
+                                sku: variant.sku || ''
+                            }
+                            if (variant.images && variant.images.length) product.image = variant.images
+                            if (variant.price) product.price = variant.price
+                        }
+                    }
+                    const qty = cartItems[items][item]
+                    product.size = item
+                    product.quantity = qty
+                    orderItems.push(product)
+                    const price = Number(product.price) || 0
+                    subtotal += price * qty
+                }
+            }
+        }
+        return { items: orderItems, subtotal }
     }
 
     const initPay = (order) => {
@@ -62,41 +96,8 @@ const PlaceOrder = () => {
     const onSubmitHandler = async (event) => {
         event.preventDefault()
         try {
-
-            let orderItems = []
-
-            for (const items in cartItems) {
-                for (const item in cartItems[items]) {
-                    if (cartItems[items][item] > 0) {
-                        // items may be composite key productId::variantId
-                        const [productId, variantId] = items.split('::')
-                        const product = structuredClone(products.find(product => product._id === productId))
-                        const itemInfo = product
-                        // attach variant info if present
-                        if (itemInfo && variantId) {
-                            const variant = itemInfo.variants && (itemInfo.variants.find(v => (v.id && v.id.toString() === variantId.toString()) ) || (itemInfo.variants[Number(variantId)]))
-                            if (variant) {
-                                itemInfo.variant = {
-                                    id: variant.id || Number(variantId),
-                                    colorName: variant.colorName || variant.color || variant.name || '',
-                                    colorHex: variant.colorHex || variant.color || variant.hex || '',
-                                    sku: variant.sku || ''
-                                }
-                                // override image and price if variant provides them
-                                if (variant.images && variant.images.length) itemInfo.image = variant.images
-                                if (variant.price) itemInfo.price = variant.price
-                            }
-                        }
-                        if (itemInfo) {
-                            itemInfo.size = item
-                            itemInfo.quantity = cartItems[items][item]
-                            orderItems.push(itemInfo)
-                        }
-                    }
-                }
-            }
-
-            let baseAmount = getCartAmount() + delivery_fee
+            const { items: orderItems, subtotal } = buildOrderItemsAndSubtotal()
+            let baseAmount = subtotal + delivery_fee
             let finalAmount = baseAmount
             if (couponInfo && couponInfo.discount) {
                 finalAmount = couponInfo.newAmount
@@ -193,11 +194,12 @@ const PlaceOrder = () => {
                     <div className='mt-4 mb-4'>
                         <label className='text-sm mr-2'>Have a coupon?</label>
                         <input value={couponCode} onChange={e=>setCouponCode(e.target.value)} className='border p-2 mr-2' placeholder='Enter coupon code' />
-                        <button onClick={async ()=>{
+                        <button type='button' onClick={async ()=>{
                             try {
                                 if (!couponCode) return toast.error('Enter coupon code')
                                 setCouponLoading(true)
-                                const res = await axios.post(backendUrl + '/api/coupon/verify', { code: couponCode, amount: getCartAmount() + delivery_fee })
+                                const { subtotal } = buildOrderItemsAndSubtotal()
+                                const res = await axios.post(backendUrl + '/api/coupon/verify', { code: couponCode, amount: subtotal + delivery_fee })
                                 setCouponLoading(false)
                                     if (res.data.success) {
                                         // normalize returned fields for use in the UI

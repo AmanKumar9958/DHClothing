@@ -24,6 +24,9 @@ const Orders = () => {
             item['payment'] = order.payment
             item['paymentMethod'] = order.paymentMethod
             item['date'] = order.date
+            item['couponCode'] = order.couponCode || null
+            item['orderAmount'] = order.amount
+            item['orderDiscount'] = order.discount || 0
             allOrdersItem.push(item)
           })
         })
@@ -31,7 +34,7 @@ const Orders = () => {
       }
       
     } catch (error) {
-      
+      console.log(error)
     }
   }
 
@@ -54,6 +57,11 @@ const Orders = () => {
                         <img className='w-16 sm:w-20' src={item.image[0]} alt="" />
                         <div>
                           <p className='sm:text-base font-medium'>{item.name}</p>
+                          {item.couponCode && (
+                            <div className='mt-1 inline-flex items-center gap-2 px-2 py-1 rounded bg-green-50 text-green-700 border border-green-200 text-xs'>
+                              Coupon {item.couponCode} applied • -{currency}{item.orderDiscount}
+                            </div>
+                          )}
                           <div className='flex items-center gap-3 mt-1 text-base text-gray-700'>
                             <p>{currency}{item.price}</p>
                             <p>Quantity: {item.quantity}</p>
@@ -72,7 +80,10 @@ const Orders = () => {
                             })()}
                           </div>
                           <p className='mt-1'>Date: <span className=' text-gray-400'>{new Date(item.date).toDateString()}</span></p>
-                          <p className='mt-1'>Payment: <span className=' text-gray-400'>{item.paymentMethod}</span></p>
+                          <p className='mt-1'>Time: <span className=' text-gray-400'>{new Date(item.date).toLocaleTimeString()}</span></p>
+                          <p className='mt-1'>Coupon: <span className=' text-gray-400'>{item.couponCode || 'N/A'}</span></p>
+                          <p className='mt-1'><span className='text-gray-400'>Payable Amount:</span> <span className='text-gray-800 font-medium'>{currency}{item.orderAmount}</span></p>
+                          <p className='mt-1'>Method: <span className='inline-block px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-medium'>{item.paymentMethod}</span></p>
                         </div>
                     </div>
                     <div className='md:w-1/2 flex justify-between'>
