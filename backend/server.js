@@ -30,6 +30,7 @@ const allowedOrigins = [
     'http://admin.dhclothing.in',
     'https://admin.dhclothing.in',
     'http://localhost:5173',
+    'http://localhost:5174',
     'http://localhost:3000',
     'http://localhost:4000'
 ];
@@ -46,6 +47,7 @@ const corsOptions = {
     }
 };
 
+
 app.use(cors(corsOptions));
 
 // api endpoints
@@ -53,6 +55,7 @@ app.use('/api/user',userRouter)
 app.use('/api/product',productRouter)
 app.use('/api/cart',cartRouter)
 app.use('/api/order',orderRouter)
+app.use('/api/coupon', couponRouter)
 app.use('/api/coupon', couponRouter)
 
 app.get('/',(req,res)=>{
