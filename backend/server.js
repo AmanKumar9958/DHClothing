@@ -8,6 +8,7 @@ import productRouter from './routes/productRoute.js'
 import cartRouter from './routes/cartRoute.js'
 import orderRouter from './routes/orderRoute.js'
 import couponRouter from './routes/couponRoute.js'
+import couponRouter from './routes/couponRoute.js'
 
 // App Config
 const app = express()
@@ -45,7 +46,17 @@ const corsOptions = {
         }
         return callback(null, true);
     }
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.indexOf(origin) === -1) {
+            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+            return callback(new Error(msg), false);
+        }
+        return callback(null, true);
+    }
 };
+
 
 app.use(cors(corsOptions));
 
@@ -54,6 +65,7 @@ app.use('/api/user',userRouter)
 app.use('/api/product',productRouter)
 app.use('/api/cart',cartRouter)
 app.use('/api/order',orderRouter)
+app.use('/api/coupon', couponRouter)
 app.use('/api/coupon', couponRouter)
 
 app.get('/',(req,res)=>{
