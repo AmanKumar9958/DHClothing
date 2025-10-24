@@ -9,7 +9,7 @@ import { toast } from 'react-toastify'
 const PlaceOrder = () => {
 
     const [method, setMethod] = useState('cod');
-    const { navigate, backendUrl, token, cartItems, setCartItems, getCartAmount, delivery_fee, products } = useContext(ShopContext);
+    const { navigate, backendUrl, token, cartItems, setCartItems, getCartAmount, delivery_fee, products, currency } = useContext(ShopContext);
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -21,6 +21,9 @@ const PlaceOrder = () => {
         country: '',
         phone: ''
     })
+    const [couponCode, setCouponCode] = useState('')
+    const [couponInfo, setCouponInfo] = useState(null)
+    const [couponLoading, setCouponLoading] = useState(false)
 
     const onChangeHandler = (event) => {
         const name = event.target.name
@@ -93,10 +96,17 @@ const PlaceOrder = () => {
                 }
             }
 
+            let baseAmount = getCartAmount() + delivery_fee
+            let finalAmount = baseAmount
+            if (couponInfo && couponInfo.discount) {
+                finalAmount = couponInfo.newAmount
+            }
+
             let orderData = {
                 address: formData,
                 items: orderItems,
-                amount: getCartAmount() + delivery_fee
+                amount: finalAmount,
+                couponCode: couponInfo ? couponInfo.coupon.code : null
             }
             
 
@@ -180,6 +190,31 @@ const PlaceOrder = () => {
 
                 <div className='mt-12'>
                     <Title text1={'PAYMENT'} text2={'METHOD'} />
+                    <div className='mt-4'>
+                        <label className='text-sm mr-2'>Have a coupon?</label>
+                        <input value={couponCode} onChange={e=>setCouponCode(e.target.value)} className='border p-2 mr-2' placeholder='Enter coupon code' />
+                        <button onClick={async ()=>{
+                            try {
+                                if (!couponCode) return toast.error('Enter coupon code')
+                                setCouponLoading(true)
+                                const res = await axios.post(backendUrl + '/api/coupon/verify', { code: couponCode, amount: getCartAmount() + delivery_fee })
+                                setCouponLoading(false)
+                                if (res.data.success) {
+                                    setCouponInfo(res.data)
+                                    toast.success('Coupon applied')
+                                } else {
+                                    toast.error(res.data.message)
+                                }
+                            } catch (error) {
+                                setCouponLoading(false)
+                                toast.error(error.message)
+                            }
+                        }} className='bg-black text-white px-3 py-1 text-sm'>{couponLoading ? 'Checking...' : 'Add'}</button>
+
+                        {couponInfo && couponInfo.discount !== undefined && (
+                            <div className='mt-2 text-sm text-green-600'>Applied {couponInfo.coupon.code}: -{currency}{couponInfo.discount} (New total: {currency}{couponInfo.newAmount})</div>
+                        )}
+                    </div>
                     {/* --------------- Payment Method Selection ------------- */}
                     <div className='flex gap-3 flex-col lg:flex-row'>
                         {/* <div onClick={() => setMethod('stripe')} className='flex items-center gap-3 border p-2 px-3 cursor-pointer'>
