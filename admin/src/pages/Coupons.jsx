@@ -56,7 +56,7 @@ const Coupons = ({ token }) => {
             <option value='fixed'>Fixed (₹)</option>
           </select>
           <input value={value} onChange={e=>setValue(e.target.value)} className='border p-2' placeholder='Value' />
-          <input value={expiresAt} onChange={e=>setExpiresAt(e.target.value)} type='date' className='border p-2' />
+          <input value={expiresAt} onChange={e=>setExpiresAt(e.target.value)} type='date' className='border p-2'  placeholder='Expiration Date' />
           <button onClick={onAdd} className='bg-black text-white px-4 py-2'>Add Coupon</button>
         </div>
       </div>

@@ -8,7 +8,7 @@ import { toast } from 'react-toastify'
 
 const PlaceOrder = () => {
 
-    const [method, setMethod] = useState('cod');
+    const [method, setMethod] = useState('razorpay');
     const { navigate, backendUrl, token, cartItems, setCartItems, getCartAmount, delivery_fee, products, currency } = useContext(ShopContext);
     const [formData, setFormData] = useState({
         firstName: '',
@@ -78,9 +78,9 @@ const PlaceOrder = () => {
                             if (variant) {
                                 itemInfo.variant = {
                                     id: variant.id || Number(variantId),
-                                    colorName: variant.colorName,
-                                    colorHex: variant.colorHex,
-                                    sku: variant.sku
+                                    colorName: variant.colorName || variant.color || variant.name || '',
+                                    colorHex: variant.colorHex || variant.color || variant.hex || '',
+                                    sku: variant.sku || ''
                                 }
                                 // override image and price if variant provides them
                                 if (variant.images && variant.images.length) itemInfo.image = variant.images
@@ -190,7 +190,7 @@ const PlaceOrder = () => {
 
                 <div className='mt-12'>
                     <Title text1={'PAYMENT'} text2={'METHOD'} />
-                    <div className='mt-4'>
+                    <div className='mt-4 mb-4'>
                         <label className='text-sm mr-2'>Have a coupon?</label>
                         <input value={couponCode} onChange={e=>setCouponCode(e.target.value)} className='border p-2 mr-2' placeholder='Enter coupon code' />
                         <button onClick={async ()=>{
@@ -199,12 +199,17 @@ const PlaceOrder = () => {
                                 setCouponLoading(true)
                                 const res = await axios.post(backendUrl + '/api/coupon/verify', { code: couponCode, amount: getCartAmount() + delivery_fee })
                                 setCouponLoading(false)
-                                if (res.data.success) {
-                                    setCouponInfo(res.data)
-                                    toast.success('Coupon applied')
-                                } else {
-                                    toast.error(res.data.message)
-                                }
+                                    if (res.data.success) {
+                                        // normalize returned fields for use in the UI
+                                        setCouponInfo({
+                                            coupon: res.data.coupon,
+                                            discount: res.data.discount,
+                                            newAmount: res.data.newAmount
+                                        })
+                                        toast.success('Coupon applied')
+                                    } else {
+                                        toast.error(res.data.message)
+                                    }
                             } catch (error) {
                                 setCouponLoading(false)
                                 toast.error(error.message)
@@ -223,7 +228,8 @@ const PlaceOrder = () => {
                         </div> */}
                         <div onClick={() => setMethod('razorpay')} className='flex items-center gap-3 border p-2 px-3 cursor-pointer'>
                             <p className={`min-w-3.5 h-3.5 border rounded-full ${method === 'razorpay' ? 'bg-green-400' : ''}`}></p>
-                            <img className='h-5 mx-4' src={assets.razorpay_logo} alt="" />
+                            {/* <img className='h-5 mx-4' src={assets.razorpay_logo} alt="" /> */}
+                            <p className='text-gray-500 text-sm font-medium mx-4'>PAY ONLINE</p>
                         </div>
                         <div onClick={() => setMethod('cod')} className='flex items-center gap-3 border p-2 px-3 cursor-pointer'>
                             <p className={`min-w-3.5 h-3.5 border rounded-full ${method === 'cod' ? 'bg-green-400' : ''}`}></p>

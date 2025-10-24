@@ -19,11 +19,19 @@ connectCloudinary()
 app.use(express.json())
 
 // --- CORRECTED CORS CONFIGURATION ---
-// List of all frontend URLs that are allowed to access the API
+// List of frontend URLs allowed to access the API. Include both http and https
+// variants and localhost for local testing. If you use a different domain set
+// VITE_BACKEND_URL or adjust this list accordingly.
 const allowedOrigins = [
     'http://dhclothing.in',
+    'https://dhclothing.in',
     'http://www.dhclothing.in',
-    'http://admin.dhclothing.in'
+    'https://www.dhclothing.in',
+    'http://admin.dhclothing.in',
+    'https://admin.dhclothing.in',
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:4000'
 ];
 
 const corsOptions = {

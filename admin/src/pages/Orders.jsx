@@ -59,7 +59,15 @@ const Orders = ({ token }) => {
               <div>
                 <div>
                   {order.items.map((item, index) => {
-                    const colorDisplay = item.variant ? (<span className='ml-2 inline-flex items-center gap-2'><span className='w-4 h-4 rounded-full' style={{background: item.variant.colorHex || '#ddd'}}></span><span className='text-xs'>{item.variant.colorName}</span></span>) : null
+                    const v = item.variant || {}
+                    const colorHex = (v && (v.colorHex || v.color || v.hex || v.colorCode)) || ''
+                    const colorName = (v && (v.colorName || v.color || v.name)) || ''
+                    const colorDisplay = (colorHex || colorName) ? (
+                      <span className='ml-2 inline-flex items-center gap-2'>
+                        <span className='w-4 h-4 rounded-full' style={{background: colorHex || '#ddd'}}></span>
+                        <span className='text-xs'>{colorName}</span>
+                      </span>
+                    ) : null
                     if (index === order.items.length - 1) {
                       return <p className='py-0.5' key={index}> {item.name} x {item.quantity} <span> {item.size} </span> {colorDisplay}</p>
                     }
