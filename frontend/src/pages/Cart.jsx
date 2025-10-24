@@ -17,13 +17,17 @@ const Cart = () => {
       for (const items in cartItems) {
         for (const item in cartItems[items]) {
           if (cartItems[items][item] > 0) {
-            const productExists = products.some((product) => product._id === items);
+            // items may be composite key productId::variantId
+            const [productId, variantId] = items.split('::')
+            const productExists = products.some((product) => product._id === productId);
             if (!productExists) {
               updateQuantity(items, item, 0);
               continue;
             }
             tempData.push({
-              _id: items,
+              _id: items, // keep composite key so updateQuantity works
+              productId,
+              variantId,
               size: item,
               quantity: cartItems[items][item]
             })
@@ -45,22 +49,45 @@ const Cart = () => {
         {
           cartData.map((item, index) => {
 
-            const productData = products.find((product) => product._id === item._id);
+            const productData = products.find((product) => product._id === item.productId || product._id === item._id);
             if (!productData) {
               return null;
             }
+            // determine variant if composite key
+            const variantId = item.variantId
+            let variant = null
+            if (variantId && productData.variants) {
+              variant = productData.variants.find(v => (v.id && v.id.toString() === variantId.toString()) || productData.variants.indexOf(v) === Number(variantId))
+            }
+
+            const displayImage = (variant && variant.images && variant.images.length) ? variant.images[0] : (productData.image && productData.image[0])
+            const displayPrice = (variant && variant.price) ? variant.price : productData.price
 
             return (
               <div key={index} className='py-4 border-t border-b text-gray-700 grid grid-cols-[4fr_0.5fr_0.5fr] sm:grid-cols-[4fr_2fr_0.5fr] items-center gap-4'>
                 <div className=' flex items-start gap-6'>
-                  <img className='w-16 sm:w-20' src={productData.image[0]} alt="" />
-                  <div>
-                    <p className='text-xs sm:text-lg font-medium'>{productData.name}</p>
-                    <div className='flex items-center gap-5 mt-2'>
-                      <p>{currency}{productData.price}</p>
-                      <p className='px-2 sm:px-3 sm:py-1 border bg-slate-50'>{item.size}</p>
+                  <img className='w-16 sm:w-20' src={displayImage} alt="" />
+                    <div>
+                      <p className='text-xs sm:text-lg font-medium'>{productData.name}</p>
+                      <div className='flex items-center gap-5 mt-2'>
+                        <p>{currency}{displayPrice}</p>
+                        <p className='px-2 sm:px-3 sm:py-1 border bg-slate-50'>{item.size}</p>
+                        {
+                          // compute color values with fallbacks for different property names
+                        }
+                        {(() => {
+                          const v = variant
+                          const colorHex = (v && (v.colorHex || v.color || v.hex || v.colorCode)) || (productData.colorHex || productData.color || '#ddd')
+                          const colorName = (v && (v.colorName || v.color || v.name)) || ''
+                          return (
+                            <div className='flex items-center gap-2'>
+                              <span className='w-4 h-4 rounded-full inline-block' style={{background: colorHex}}></span>
+                              <span className='text-sm'>{colorName}</span>
+                            </div>
+                          )
+                        })()}
+                      </div>
                     </div>
-                  </div>
                 </div>
                 <input onChange={(e) => e.target.value === '' || e.target.value === '0' ? null : updateQuantity(item._id, item.size, Number(e.target.value))} className='border max-w-10 sm:max-w-20 px-1 sm:px-2 py-1' type="number" min={1} defaultValue={item.quantity} />
                 <img onClick={() => updateQuantity(item._id, item.size, 0)} className='w-4 mr-4 sm:w-5 cursor-pointer' src={assets.bin_icon} alt="" />

@@ -58,6 +58,18 @@ const Orders = () => {
                             <p>{currency}{item.price}</p>
                             <p>Quantity: {item.quantity}</p>
                             <p>Size: {item.size}</p>
+                            {(() => {
+                              const v = item.variant || {}
+                              const colorHex = (v && (v.colorHex || v.color || v.hex || v.colorCode)) || ''
+                              const colorName = (v && (v.colorName || v.color || v.name)) || ''
+                              if (!colorHex && !colorName) return null
+                              return (
+                                <p className='flex items-center gap-2'>
+                                  <span className='w-4 h-4 rounded-full inline-block' style={{background: colorHex || '#ddd'}}></span>
+                                  <span>{colorName}</span>
+                                </p>
+                              )
+                            })()}
                           </div>
                           <p className='mt-1'>Date: <span className=' text-gray-400'>{new Date(item.date).toDateString()}</span></p>
                           <p className='mt-1'>Payment: <span className=' text-gray-400'>{item.paymentMethod}</span></p>

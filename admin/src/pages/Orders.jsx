@@ -59,11 +59,20 @@ const Orders = ({ token }) => {
               <div>
                 <div>
                   {order.items.map((item, index) => {
+                    const v = item.variant || {}
+                    const colorHex = (v && (v.colorHex || v.color || v.hex || v.colorCode)) || ''
+                    const colorName = (v && (v.colorName || v.color || v.name)) || ''
+                    const colorDisplay = (colorHex || colorName) ? (
+                      <span className='ml-2 inline-flex items-center gap-2'>
+                        <span className='w-4 h-4 rounded-full' style={{background: colorHex || '#ddd'}}></span>
+                        <span className='text-xs'>{colorName}</span>
+                      </span>
+                    ) : null
                     if (index === order.items.length - 1) {
-                      return <p className='py-0.5' key={index}> {item.name} x {item.quantity} <span> {item.size} </span> </p>
+                      return <p className='py-0.5' key={index}> {item.name} x {item.quantity} <span> {item.size} </span> {colorDisplay}</p>
                     }
                     else {
-                      return <p className='py-0.5' key={index}> {item.name} x {item.quantity} <span> {item.size} </span> ,</p>
+                      return <p className='py-0.5' key={index}> {item.name} x {item.quantity} <span> {item.size} </span> , {colorDisplay}</p>
                     }
                   })}
                 </div>
@@ -79,6 +88,7 @@ const Orders = ({ token }) => {
                 <p className='mt-3'>Method : {order.paymentMethod}</p>
                 <p>Payment : { order.payment ? 'Done' : 'Pending' }</p>
                 <p>Date : {new Date(order.date).toLocaleDateString()}</p>
+                <p>Time: {new Date(order.date).toLocaleTimeString()}</p>
               </div>
               <p className='text-sm sm:text-[15px]'>{currency}{order.amount}</p>
               <select onChange={(event)=>statusHandler(event,order._id)} value={order.status} className='p-2 font-semibold'>

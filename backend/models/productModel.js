@@ -4,7 +4,10 @@ const productSchema = new mongoose.Schema({
     name: { type: String, required: true },
     description: { type: String, required: true },
     price: { type: Number, required: true },
+    // fallback / generic images for the product
     image: { type: Array, required: true },
+    // per-color/variant data. Each variant can contain: colorName, colorHex, images (array of URLs), sku, stock etc.
+    variants: { type: Array, default: [] },
     category: { type: String, required: true },
     subCategory: { type: String, required: true },
     sizes: { type: Array, required: true },

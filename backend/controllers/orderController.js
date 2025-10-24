@@ -1,5 +1,6 @@
 import orderModel from "../models/orderModel.js";
 import userModel from "../models/userModel.js";
+import couponModel from "../models/couponModel.js";
 import Stripe from 'stripe'
 import razorpay from 'razorpay'
 
@@ -17,16 +18,30 @@ const razorpayInstance = new razorpay({
 
 // Placing orders using COD Method
 const placeOrder = async (req,res) => {
-    
     try {
-        
-        const { userId, items, amount, address} = req.body;
+        const { userId, items, amount: amountFromClient, address, couponCode } = req.body;
+
+        // validate coupon if provided
+        let finalAmount = Number(amountFromClient) || 0
+        let discountAmount = 0
+        if (couponCode) {
+            const c = await couponModel.findOne({ code: couponCode.trim().toUpperCase() })
+            if (!c || !c.active || (c.expiresAt && Date.now() > c.expiresAt)) {
+                return res.json({ success:false, message: 'Invalid or inactive coupon' })
+            }
+            if (c.type === 'percent') discountAmount = Math.round((finalAmount * c.value)/100)
+            else discountAmount = Number(c.value)
+            if (discountAmount > finalAmount) discountAmount = finalAmount
+            finalAmount = Math.max(0, finalAmount - discountAmount)
+        }
 
         const orderData = {
             userId,
             items,
             address,
-            amount,
+            amount: finalAmount,
+            couponCode: couponCode || null,
+            discount: discountAmount || 0,
             paymentMethod:"COD",
             payment:false,
             date: Date.now()
@@ -39,7 +54,6 @@ const placeOrder = async (req,res) => {
 
         res.json({success:true,message:"Order Placed"})
 
-
     } catch (error) {
         console.log(error)
         res.json({success:false,message:error.message})
@@ -50,15 +64,30 @@ const placeOrder = async (req,res) => {
 // Placing orders using Stripe Method
 const placeOrderStripe = async (req,res) => {
     try {
-        
-        const { userId, items, amount, address} = req.body
+        const { userId, items, amount: amountFromClient, address, couponCode } = req.body
         const { origin } = req.headers;
+
+        // validate coupon if provided
+        let finalAmount = Number(amountFromClient) || 0
+        let discountAmount = 0
+        if (couponCode) {
+            const c = await couponModel.findOne({ code: couponCode.trim().toUpperCase() })
+            if (!c || !c.active || (c.expiresAt && Date.now() > c.expiresAt)) {
+                return res.json({ success:false, message: 'Invalid or inactive coupon' })
+            }
+            if (c.type === 'percent') discountAmount = Math.round((finalAmount * c.value)/100)
+            else discountAmount = Number(c.value)
+            if (discountAmount > finalAmount) discountAmount = finalAmount
+            finalAmount = Math.max(0, finalAmount - discountAmount)
+        }
 
         const orderData = {
             userId,
             items,
             address,
-            amount,
+            amount: finalAmount,
+            couponCode: couponCode || null,
+            discount: discountAmount || 0,
             paymentMethod:"Stripe",
             payment:false,
             date: Date.now()
@@ -67,27 +96,15 @@ const placeOrderStripe = async (req,res) => {
         const newOrder = new orderModel(orderData)
         await newOrder.save()
 
-        const line_items = items.map((item) => ({
+        // Use a single line item for total amount so Stripe charges the discounted total
+        const line_items = [{
             price_data: {
                 currency:currency,
-                product_data: {
-                    name:item.name
-                },
-                unit_amount: item.price * 100
-            },
-            quantity: item.quantity
-        }))
-
-        line_items.push({
-            price_data: {
-                currency:currency,
-                product_data: {
-                    name:'Delivery Charges'
-                },
-                unit_amount: deliveryCharge * 100
+                product_data: { name: 'Order Payment' },
+                unit_amount: Math.round(finalAmount * 100)
             },
             quantity: 1
-        })
+        }]
 
         const session = await stripe.checkout.sessions.create({
             success_url: `${origin}/verify?success=true&orderId=${newOrder._id}`,
@@ -129,14 +146,29 @@ const verifyStripe = async (req,res) => {
 // Placing orders using Razorpay Method
 const placeOrderRazorpay = async (req,res) => {
     try {
-        
-        const { userId, items, amount, address} = req.body
+        const { userId, items, amount: amountFromClient, address, couponCode } = req.body
+
+        // validate coupon if provided
+        let finalAmount = Number(amountFromClient) || 0
+        let discountAmount = 0
+        if (couponCode) {
+            const c = await couponModel.findOne({ code: couponCode.trim().toUpperCase() })
+            if (!c || !c.active || (c.expiresAt && Date.now() > c.expiresAt)) {
+                return res.json({ success:false, message: 'Invalid or inactive coupon' })
+            }
+            if (c.type === 'percent') discountAmount = Math.round((finalAmount * c.value)/100)
+            else discountAmount = Number(c.value)
+            if (discountAmount > finalAmount) discountAmount = finalAmount
+            finalAmount = Math.max(0, finalAmount - discountAmount)
+        }
 
         const orderData = {
             userId,
             items,
             address,
-            amount,
+            amount: finalAmount,
+            couponCode: couponCode || null,
+            discount: discountAmount || 0,
             paymentMethod:"Razorpay",
             payment:false,
             date: Date.now()
@@ -146,7 +178,7 @@ const placeOrderRazorpay = async (req,res) => {
         await newOrder.save()
 
         const options = {
-            amount: amount * 100,
+            amount: Math.round(finalAmount * 100),
             currency: currency.toUpperCase(),
             receipt : newOrder._id.toString()
         }

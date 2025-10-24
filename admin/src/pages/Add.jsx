@@ -10,6 +10,7 @@ const Add = ({token}) => {
   const [image2,setImage2] = useState(false)
   const [image3,setImage3] = useState(false)
   const [image4,setImage4] = useState(false)
+  const [variants, setVariants] = useState([])
 
    const [name, setName] = useState("");
    const [description, setDescription] = useState("");
@@ -39,6 +40,17 @@ const Add = ({token}) => {
       image3 && formData.append("image3",image3)
       image4 && formData.append("image4",image4)
 
+      // append variants metadata and files
+      if (variants.length > 0) {
+        const meta = variants.map(v => ({ colorName: v.colorName, colorHex: v.colorHex, sku: v.sku, stock: v.stock }))
+        formData.append('variants', JSON.stringify(meta))
+        variants.forEach((v, idx) => {
+          (v.images || []).forEach(file => {
+            formData.append(`variant_${idx}_images`, file)
+          })
+        })
+      }
+
       const response = await axios.post(backendUrl + "/api/product/add",formData,{headers:{token}})
 
       if (response.data.success) {
@@ -63,24 +75,12 @@ const Add = ({token}) => {
   return (
     <form onSubmit={onSubmitHandler} className='flex flex-col w-full items-start gap-3'>
         <div>
-          <p className='mb-2'>Upload Image</p>
+          <p className='mb-2 font-bold'>Upload Cover Image</p>
 
           <div className='flex gap-2'>
             <label htmlFor="image1">
               <img className='w-20' src={!image1 ? assets.upload_area : URL.createObjectURL(image1)} alt="" />
               <input onChange={(e)=>setImage1(e.target.files[0])} type="file" id="image1" hidden/>
-            </label>
-            <label htmlFor="image2">
-              <img className='w-20' src={!image2 ? assets.upload_area : URL.createObjectURL(image2)} alt="" />
-              <input onChange={(e)=>setImage2(e.target.files[0])} type="file" id="image2" hidden/>
-            </label>
-            <label htmlFor="image3">
-              <img className='w-20' src={!image3 ? assets.upload_area : URL.createObjectURL(image3)} alt="" />
-              <input onChange={(e)=>setImage3(e.target.files[0])} type="file" id="image3" hidden/>
-            </label>
-            <label htmlFor="image4">
-              <img className='w-20' src={!image4 ? assets.upload_area : URL.createObjectURL(image4)} alt="" />
-              <input onChange={(e)=>setImage4(e.target.files[0])} type="file" id="image4" hidden/>
             </label>
           </div>
         </div>
@@ -102,7 +102,6 @@ const Add = ({token}) => {
               <select onChange={(e) => setCategory(e.target.value)} className='w-full px-3 py-2'>
                   <option value="Men">Men</option>
                   <option value="Women">Women</option>
-                  <option value="Kids">Kids</option>
               </select>
             </div>
 
@@ -150,6 +149,31 @@ const Add = ({token}) => {
         <div className='flex gap-2 mt-2'>
           <input onChange={() => setBestseller(prev => !prev)} checked={bestseller} type="checkbox" id='bestseller' />
           <label className='cursor-pointer' htmlFor="bestseller">Add to bestseller</label>
+        </div>
+
+        <div>
+          <p className='mb-2 font-bold'>Add Variants (colors)</p>
+          <div className='flex flex-col gap-2'>
+            {variants.map((v, idx) => (
+              <div key={idx} className='p-2 border'>
+                <div className='flex gap-2 items-center'>
+                  <input value={v.colorName} onChange={(e)=>{ const copy=[...variants]; copy[idx].colorName = e.target.value; setVariants(copy)}} placeholder='Color name' className='px-2 py-1'/>
+                  <input value={v.colorHex} onChange={(e)=>{ const copy=[...variants]; copy[idx].colorHex = e.target.value; setVariants(copy)}} placeholder='#ff0000' className='px-2 py-1'/>
+                  <input value={v.sku||''} onChange={(e)=>{ const copy=[...variants]; copy[idx].sku = e.target.value; setVariants(copy)}} placeholder='SKU' className='px-2 py-1'/>
+                  <button type='button' onClick={()=>{ setVariants(prev=> prev.filter((_,i)=>i!==idx)) }} className='px-2'>Remove</button>
+                </div>
+                <div className='flex gap-2 mt-2'>
+                  {[0,1,2,3].map(i=> (
+                    <label key={i}>
+                      <img className='w-16' src={!v.images || !v.images[i] ? assets.upload_area : URL.createObjectURL(v.images[i])} alt='' />
+                      <input onChange={(e)=>{ const file = e.target.files[0]; const copy=[...variants]; copy[idx].images = copy[idx].images||[]; copy[idx].images[i] = file; setVariants(copy)}} type='file' hidden />
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <button type='button' onClick={()=> setVariants(prev=>[...prev,{ colorName:'', colorHex:'', sku:'', stock:{}, images:[] }])} className='mt-2 px-3 py-1 bg-slate-200'>Add Variant</button>
+          </div>
         </div>
 
         <button type="submit" className='w-28 py-3 mt-4 bg-black text-white'>ADD</button>
