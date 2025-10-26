@@ -18,6 +18,7 @@ const Add = ({token}) => {
    const [category, setCategory] = useState("Men");
    const [subCategory, setSubCategory] = useState("Topwear");
    const [bestseller, setBestseller] = useState(false);
+  const [exclusive, setExclusive] = useState(false);
    const [sizes, setSizes] = useState([]);
 
    const onSubmitHandler = async (e) => {
@@ -33,6 +34,7 @@ const Add = ({token}) => {
       formData.append("category",category)
       formData.append("subCategory",subCategory)
       formData.append("bestseller",bestseller)
+  formData.append("exclusive",exclusive)
       formData.append("sizes",JSON.stringify(sizes))
 
       image1 && formData.append("image1",image1)
@@ -151,6 +153,11 @@ const Add = ({token}) => {
         <div className='flex gap-2 mt-2'>
           <input onChange={() => setBestseller(prev => !prev)} checked={bestseller} type="checkbox" id='bestseller' />
           <label className='cursor-pointer' htmlFor="bestseller">Add to bestseller</label>
+        </div>
+
+        <div className='flex gap-2 mt-2'>
+          <input onChange={() => setExclusive(prev => !prev)} checked={exclusive} type="checkbox" id='exclusive' />
+          <label className='cursor-pointer' htmlFor="exclusive">Add to exclusive</label>
         </div>
 
         <div>

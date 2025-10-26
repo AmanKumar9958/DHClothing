@@ -12,6 +12,7 @@ const productSchema = new mongoose.Schema({
     subCategory: { type: String, required: true },
     sizes: { type: Array, required: true },
     bestseller: { type: Boolean },
+    exclusive: { type: Boolean, default: false },
     date: { type: Number, required: true }
 })
 

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react'
+import { useCallback, useContext, useEffect, useState } from 'react'
 import { ShopContext } from '../context/ShopContext'
 import { assets } from '../assets/assets';
 import Title from '../components/Title';
@@ -34,9 +34,12 @@ const Collection = () => {
     }
   }
 
-  const applyFilter = () => {
+  const applyFilter = useCallback(() => {
 
     let productsCopy = products.slice();
+
+    // Always exclude exclusive items from general collection listing
+    productsCopy = productsCopy.filter(item => !item.exclusive);
 
     if (showSearch && search) {
       productsCopy = productsCopy.filter(item => item.name.toLowerCase().includes(search.toLowerCase()))
@@ -52,9 +55,9 @@ const Collection = () => {
 
     setFilterProducts(productsCopy)
 
-  }
+  }, [products, showSearch, search, category, subCategory])
 
-  const sortProduct = () => {
+  const sortProduct = useCallback(() => {
 
     let fpCopy = filterProducts.slice();
 
@@ -72,15 +75,15 @@ const Collection = () => {
         break;
     }
 
-  }
+  }, [filterProducts, sortType, applyFilter])
 
   useEffect(()=>{
-      applyFilter();
-  },[category,subCategory,search,showSearch,products])
+    applyFilter();
+  },[applyFilter])
 
   useEffect(()=>{
     sortProduct();
-  },[sortType])
+  },[sortProduct])
 
   return (
     <div className='flex flex-col sm:flex-row gap-1 sm:gap-10 pt-10 border-t'>
