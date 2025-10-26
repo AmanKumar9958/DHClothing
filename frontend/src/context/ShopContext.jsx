@@ -9,7 +9,7 @@ const ShopContextProvider = (props) => {
 
     const currency = '₹';
     const delivery_fee = 10;
-    const backendUrl = import.meta.env.VITE_BACKEND_URL
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin
     const [search, setSearch] = useState('');
     const [showSearch, setShowSearch] = useState(false);
     const [cartItems, setCartItems] = useState({});
@@ -19,6 +19,13 @@ const ShopContextProvider = (props) => {
 
 
     const addToCart = async (itemId, size, variantId = null) => {
+
+        // Require login before adding items to cart
+        if (!token) {
+            toast.info('Please log in to add items to your cart');
+            navigate('/login');
+            return;
+        }
 
         if (!size) {
             toast.error('Select Product Size');
@@ -45,15 +52,11 @@ const ShopContextProvider = (props) => {
         // notify user
         toast.success('Added to cart');
 
-        if (token) {
-            try {
-
-                await axios.post(backendUrl + '/api/cart/add', { itemId, size, variantId }, { headers: { token } })
-
-            } catch (error) {
-                console.log(error)
-                toast.error(error.message)
-            }
+        try {
+            await axios.post(backendUrl + '/api/cart/add', { itemId, size, variantId }, { headers: { token } })
+        } catch (error) {
+            console.log(error)
+            toast.error(error.message)
         }
 
     }

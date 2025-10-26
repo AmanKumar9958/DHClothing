@@ -2,6 +2,7 @@ import { useContext, useState } from 'react'
 import {assets} from '../assets/assets'
 import { Link, NavLink } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext';
+import { toast } from 'react-toastify'
 
 const Navbar = () => {
 
@@ -14,6 +15,15 @@ const Navbar = () => {
         localStorage.removeItem('token')
         setToken('')
         setCartItems({})
+    }
+
+    const handleExclusiveClick = (e) => {
+        if (!token) {
+            e?.preventDefault?.()
+            toast.info('Please log in to view exclusive products')
+            return
+        }
+        navigate('/exclusive')
     }
 
   return (
@@ -33,6 +43,10 @@ const Navbar = () => {
         </NavLink>
         <NavLink to='/about' className='flex flex-col items-center gap-1'>
             <p>ABOUT</p>
+            <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden' />
+        </NavLink>
+        <NavLink to='/exclusive' onClick={handleExclusiveClick} className='flex flex-col items-center gap-1'>
+            <p>EXCLUSIVE</p>
             <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden' />
         </NavLink>
         <NavLink to='/contact' className='flex flex-col items-center gap-1'>
@@ -74,6 +88,7 @@ const Navbar = () => {
                     <NavLink onClick={()=>setVisible(false)} className='py-2 pl-6 border' to='/'>HOME</NavLink>
                     <NavLink onClick={()=>setVisible(false)} className='py-2 pl-6 border' to='/collection'>COLLECTION</NavLink>
                     <NavLink onClick={()=>setVisible(false)} className='py-2 pl-6 border' to='/about'>ABOUT</NavLink>
+                    <button onClick={()=>{ if(!token){ toast.info('Please log in to view exclusive products'); return } setVisible(false); navigate('/exclusive') }} className='text-left py-2 pl-6 border'>EXCLUSIVE</button>
                     <NavLink onClick={()=>setVisible(false)} className='py-2 pl-6 border' to='/contact'>CONTACT</NavLink>
                 </div>
         </div>
