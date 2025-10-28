@@ -106,10 +106,10 @@ const ShopContextProvider = (props) => {
 
     const getCartAmount = () => {
         let totalAmount = 0;
-        let oversizeCount = 0;
-        let regularCount = 0;
+        let oversizeCount = 0, oversizeBase = 0;
+        let regularCount = 0, regularBase = 0;
 
-        // 1) Aggregate counts for special pricing groups; add normal items immediately
+        // 1) Aggregate counts and base prices for special groups; add other items directly
         for (const items in cartItems) {
             const [productId, variantId] = items.split('::')
             const itemInfo = products.find((product) => product._id === productId)
@@ -117,17 +117,21 @@ const ShopContextProvider = (props) => {
                 try {
                     const qty = cartItems[items][size]
                     if (qty > 0 && itemInfo) {
+                        // determine effective base price per item (respect variant overrides)
+                        let price = itemInfo.price
+                        if (variantId && itemInfo.variants) {
+                            const v = itemInfo.variants.find(vv => (vv.id && vv.id.toString() === variantId.toString()) || itemInfo.variants.indexOf(vv) === Number(variantId))
+                            if (v && v.price) price = v.price
+                        }
+
                         const sc = (itemInfo.subCategory || '').toLowerCase()
-                        if (sc === 'oversize' || sc === 'regular fit') {
-                            if (sc === 'oversize') oversizeCount += qty
-                            else regularCount += qty
+                        if (sc === 'oversize') {
+                            oversizeCount += qty
+                            oversizeBase += price * qty
+                        } else if (sc === 'regular fit') {
+                            regularCount += qty
+                            regularBase += price * qty
                         } else {
-                            // normal item pricing (respect variant specific price if present)
-                            let price = itemInfo.price
-                            if (variantId && itemInfo.variants) {
-                                const v = itemInfo.variants.find(vv => (vv.id && vv.id.toString() === variantId.toString()) || itemInfo.variants.indexOf(vv) === Number(variantId))
-                                if (v && v.price) price = v.price
-                            }
                             totalAmount += price * qty
                         }
                     }
@@ -137,7 +141,7 @@ const ShopContextProvider = (props) => {
             }
         }
 
-        // 2) Apply special bundle pricing
+        // 2) Bundle pricing functions
         const priceOversize = (n) => {
             let t = 0
             while (n >= 3) { t += 999; n -= 3 }
@@ -153,13 +157,14 @@ const ShopContextProvider = (props) => {
             return t
         }
 
-        totalAmount += priceOversize(oversizeCount)
-        totalAmount += priceRegular(regularCount)
+        // 3) Add the better of (base sum) vs (bundle price) so deals never increase cost
+        totalAmount += Math.min(oversizeBase, priceOversize(oversizeCount))
+        totalAmount += Math.min(regularBase, priceRegular(regularCount))
 
         return totalAmount;
     }
 
-    // Compute subtotal if there were no bundle deals applied
+    // Compute subtotal using normal item prices only (no bundle deals)
     const getCartSinglesAmount = () => {
         let total = 0
         for (const items in cartItems) {
@@ -169,19 +174,12 @@ const ShopContextProvider = (props) => {
                 try {
                     const qty = cartItems[items][size]
                     if (qty > 0 && itemInfo) {
-                        const sc = (itemInfo.subCategory || '').toLowerCase()
-                        if (sc === 'oversize') {
-                            total += 499 * qty
-                        } else if (sc === 'regular fit') {
-                            total += 299 * qty
-                        } else {
-                            let price = itemInfo.price
-                            if (variantId && itemInfo.variants) {
-                                const v = itemInfo.variants.find(vv => (vv.id && vv.id.toString() === variantId.toString()) || itemInfo.variants.indexOf(vv) === Number(variantId))
-                                if (v && v.price) price = v.price
-                            }
-                            total += price * qty
+                        let price = itemInfo.price
+                        if (variantId && itemInfo.variants) {
+                            const v = itemInfo.variants.find(vv => (vv.id && vv.id.toString() === variantId.toString()) || itemInfo.variants.indexOf(vv) === Number(variantId))
+                            if (v && v.price) price = v.price
                         }
+                        total += price * qty
                     }
                 } catch (e) {
                     // ignore bad items

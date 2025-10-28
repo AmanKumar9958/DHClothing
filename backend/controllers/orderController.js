@@ -7,7 +7,6 @@ import razorpay from 'razorpay'
 
 // global variables
 const currency = 'inr'
-const deliveryCharge = 10
 
 // gateway initialize
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
@@ -17,7 +16,7 @@ const razorpayInstance = new razorpay({
     key_secret : process.env.RAZORPAY_KEY_SECRET,
 })
 
-// Compute subtotal from items using server-side product data
+// Compute subtotal from items using server-side product data (no deals)
 const computeSubtotalFromItems = async (items) => {
     if (!Array.isArray(items)) return 0
     let total = 0
@@ -51,14 +50,78 @@ const computeSubtotalFromItems = async (items) => {
     return total
 }
 
+// Compute subtotal applying bundle deals for Oversize and Regular fit, never charging more than base prices
+const computeSubtotalWithDeals = async (items) => {
+    if (!Array.isArray(items)) return 0
+    let total = 0
+    let oversizeCount = 0, oversizeBase = 0
+    let regularCount = 0, regularBase = 0
+
+    for (const it of items) {
+        try {
+            const id = it._id || it.productId || (it.id && it.id._id)
+            if (!id) continue
+            const prod = await productModel.findById(id)
+            if (!prod) continue
+            let price = Number(prod.price) || 0
+            // variant override
+            if (it.variant && (it.variant.id || it.variant.colorName || it.variant.colorHex)) {
+                const byId = it.variant.id && Array.isArray(prod.variants) && prod.variants.find(v => (v.id && v.id.toString() === it.variant.id.toString()))
+                let variantDoc = byId
+                if (!variantDoc && Array.isArray(prod.variants)) {
+                    variantDoc = prod.variants.find(v => (
+                        (it.variant.colorHex && (v.colorHex === it.variant.colorHex)) ||
+                        (it.variant.colorName && (v.colorName === it.variant.colorName))
+                    ))
+                }
+                if (variantDoc && variantDoc.price) {
+                    price = Number(variantDoc.price)
+                }
+            }
+            const qty = Number(it.quantity) || 0
+            const sc = (prod.subCategory || '').toLowerCase()
+            if (sc === 'oversize') {
+                oversizeCount += qty
+                oversizeBase += price * qty
+            } else if (sc === 'regular fit') {
+                regularCount += qty
+                regularBase += price * qty
+            } else {
+                total += price * qty
+            }
+        } catch (e) { /* ignore */ }
+    }
+
+    const priceOversize = (n) => {
+        let t = 0
+        while (n >= 3) { t += 999; n -= 3 }
+        if (n === 2) t += 799
+        else if (n === 1) t += 499
+        return t
+    }
+    const priceRegular = (n) => {
+        let t = 0
+        while (n >= 4) { t += 999; n -= 4 }
+        while (n >= 3) { t += 799; n -= 3 }
+        if (n > 0) t += n * 299
+        return t
+    }
+
+    total += Math.min(oversizeBase, priceOversize(oversizeCount))
+    total += Math.min(regularBase, priceRegular(regularCount))
+
+    return total
+}
+
 // Placing orders using COD Method
 const placeOrder = async (req,res) => {
     try {
-        const { userId, items, address, couponCode } = req.body;
+    const { userId, items, address, couponCode } = req.body;
 
         // compute subtotal from items server-side
-        const subtotal = await computeSubtotalFromItems(items)
-        let finalAmount = subtotal + deliveryCharge
+    const subtotal = await computeSubtotalWithDeals(items)
+    const shipping = 79 // COD only
+    let finalAmount = subtotal + shipping
         let discountAmount = 0
         if (couponCode) {
             const c = await couponModel.findOne({ code: couponCode.trim().toUpperCase() })
@@ -100,12 +163,12 @@ const placeOrder = async (req,res) => {
 // Placing orders using Stripe Method
 const placeOrderStripe = async (req,res) => {
     try {
-        const { userId, items, address, couponCode } = req.body
+    const { userId, items, address, couponCode } = req.body
         const { origin } = req.headers;
 
         // compute subtotal from items server-side
-        const subtotal = await computeSubtotalFromItems(items)
-        let finalAmount = subtotal + deliveryCharge
+    const subtotal = await computeSubtotalWithDeals(items)
+    let finalAmount = subtotal // Online has no delivery charge
         let discountAmount = 0
         if (couponCode) {
             const c = await couponModel.findOne({ code: couponCode.trim().toUpperCase() })
@@ -183,11 +246,11 @@ const verifyStripe = async (req,res) => {
 // Placing orders using Razorpay Method
 const placeOrderRazorpay = async (req,res) => {
     try {
-        const { userId, items, address, couponCode } = req.body
+    const { userId, items, address, couponCode } = req.body
 
         // compute subtotal from items server-side
-        const subtotal = await computeSubtotalFromItems(items)
-        let finalAmount = subtotal + deliveryCharge
+    const subtotal = await computeSubtotalWithDeals(items)
+    let finalAmount = subtotal // Online has no delivery charge
         let discountAmount = 0
         if (couponCode) {
             const c = await couponModel.findOne({ code: couponCode.trim().toUpperCase() })
