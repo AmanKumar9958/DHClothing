@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { ShopContext } from '../context/ShopContext'
 import Title from '../components/Title';
 import { assets } from '../assets/assets';
@@ -6,7 +6,7 @@ import CartTotal from '../components/CartTotal';
 
 const Cart = () => {
 
-  const { products, currency, cartItems, updateQuantity, navigate } = useContext(ShopContext);
+  const { products, currency, cartItems, updateQuantity, navigate, getCartAmount, getCartSinglesAmount } = useContext(ShopContext);
 
   const [cartData, setCartData] = useState([]);
 
@@ -37,6 +37,47 @@ const Cart = () => {
       setCartData(tempData);
     }
   }, [cartItems, products, updateQuantity])
+
+  // Compute deal hints for Oversize and Regular fit based on items in cart
+  const computeDealHints = () => {
+    let oversize = 0
+    let regular = 0
+    for (const items in cartItems) {
+      const [productId] = items.split('::')
+      const pd = products.find(p => p._id === productId)
+      if (!pd) continue
+      const sc = (pd.subCategory || '').toLowerCase()
+      for (const size in cartItems[items]) {
+        const qty = cartItems[items][size]
+        if (!qty || qty <= 0) continue
+        if (sc === 'oversize') oversize += qty
+        if (sc === 'regular fit') regular += qty
+      }
+    }
+
+    const oversizeMsg = () => {
+      if (oversize === 0) return null
+      const rem = oversize % 3
+      if (rem === 0) return `Deal applied: ${Math.floor(oversize/3)}× (3 for ₹999)`
+      if (rem === 1) return 'Add 1 more Oversize to get 2 for ₹799 (save ₹199)'
+      // rem === 2
+      return 'Add 1 more Oversize to get 3 for ₹999 (save ₹299)'
+    }
+
+    const regularMsg = () => {
+      if (regular === 0) return null
+      const rem = regular % 4
+      if (rem === 0) return `Deal applied: ${Math.floor(regular/4)}× (4 for ₹999)`
+      if (rem === 3) return 'Add 1 more Regular fit to get 4 for ₹999 (save ₹99)'
+      if (rem === 2) return 'Add 1 more Regular fit to get 3 for ₹799 (save ₹98)'
+      // rem === 1
+      return 'Add 2 more Regular fit to get 3 for ₹799 (save ₹98)'
+    }
+
+    return { oversize, regular, oversizeMsg: oversizeMsg(), regularMsg: regularMsg() }
+  }
+
+  const dealHints = computeDealHints()
 
   return (
     <div className='border-t pt-14'>
@@ -98,9 +139,39 @@ const Cart = () => {
         }
       </div>
 
+      {/* Deals hint */}
+      {(dealHints.oversizeMsg || dealHints.regularMsg) && (
+        <div className='my-8 p-4 bg-orange-50 border border-orange-200 rounded'>
+          <p className='font-medium mb-1'>Bundle deals</p>
+          <ul className='list-disc pl-5 text-sm text-orange-800'>
+            {dealHints.oversizeMsg && <li>Oversize: {dealHints.oversizeMsg}</li>}
+            {dealHints.regularMsg && <li>Regular fit: {dealHints.regularMsg}</li>}
+          </ul>
+          <div className='text-xs text-orange-700 mt-2'>
+            • Oversize: 1 for ₹499, 2 for ₹799, 3 for ₹999. • Regular fit: 1 for ₹299, 3 for ₹799, 4 for ₹999.
+          </div>
+        </div>
+      )}
+
+      {/* Savings banner below totals */}
+      {(() => {
+        const bundle = getCartAmount()
+        const singles = getCartSinglesAmount()
+        const save = Math.max(0, singles - bundle)
+        if (save <= 0) return null
+        return (
+          <div className='w-full sm:w-[450px] ml-auto my-2 text-right text-green-700'>
+            <span className='inline-block bg-green-50 border border-green-200 rounded px-3 py-2 text-sm'>
+              You save {currency}{save}
+            </span>
+          </div>
+        )
+      })()}
+
       <div className='flex justify-end my-20'>
         <div className='w-full sm:w-[450px]'>
-          <CartTotal />
+          <CartTotal deliveryFee={0} />
+          <p className='text-xs text-gray-500 mt-2 text-right'>Shipping applies only for Cash on Delivery at checkout.</p>
           <div className=' w-full text-end'>
             <button onClick={() => navigate('/place-order')} className='bg-black text-white text-sm my-8 px-8 py-3'>PROCEED TO CHECKOUT</button>
           </div>

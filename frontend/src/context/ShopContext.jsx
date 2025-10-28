@@ -8,7 +8,8 @@ export const ShopContext = createContext();
 const ShopContextProvider = (props) => {
 
     const currency = '₹';
-    const delivery_fee = 10;
+    // Default delivery fee; PlaceOrder can override per payment method
+    const delivery_fee = 79;
     const backendUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin
     const [search, setSearch] = useState('');
     const [showSearch, setShowSearch] = useState(false);
@@ -105,27 +106,89 @@ const ShopContextProvider = (props) => {
 
     const getCartAmount = () => {
         let totalAmount = 0;
+        let oversizeCount = 0;
+        let regularCount = 0;
+
+        // 1) Aggregate counts for special pricing groups; add normal items immediately
         for (const items in cartItems) {
-            // items can be composite key productId::variantId
             const [productId, variantId] = items.split('::')
             const itemInfo = products.find((product) => product._id === productId)
-            for (const item in cartItems[items]) {
+            for (const size in cartItems[items]) {
                 try {
-                    if (cartItems[items][item] > 0) {
-                        // if variant price exists, use it
-                        let price = itemInfo.price
-                        if (variantId && itemInfo.variants) {
-                            const v = itemInfo.variants.find(vv => (vv.id && vv.id.toString() === variantId.toString()) || itemInfo.variants.indexOf(vv) === Number(variantId))
-                            if (v && v.price) price = v.price
+                    const qty = cartItems[items][size]
+                    if (qty > 0 && itemInfo) {
+                        const sc = (itemInfo.subCategory || '').toLowerCase()
+                        if (sc === 'oversize' || sc === 'regular fit') {
+                            if (sc === 'oversize') oversizeCount += qty
+                            else regularCount += qty
+                        } else {
+                            // normal item pricing (respect variant specific price if present)
+                            let price = itemInfo.price
+                            if (variantId && itemInfo.variants) {
+                                const v = itemInfo.variants.find(vv => (vv.id && vv.id.toString() === variantId.toString()) || itemInfo.variants.indexOf(vv) === Number(variantId))
+                                if (v && v.price) price = v.price
+                            }
+                            totalAmount += price * qty
                         }
-                        totalAmount += price * cartItems[items][item];
                     }
                 } catch (error) {
-
+                    // ignore broken items
                 }
             }
         }
+
+        // 2) Apply special bundle pricing
+        const priceOversize = (n) => {
+            let t = 0
+            while (n >= 3) { t += 999; n -= 3 }
+            if (n === 2) t += 799
+            else if (n === 1) t += 499
+            return t
+        }
+        const priceRegular = (n) => {
+            let t = 0
+            while (n >= 4) { t += 999; n -= 4 }
+            while (n >= 3) { t += 799; n -= 3 }
+            if (n > 0) t += n * 299
+            return t
+        }
+
+        totalAmount += priceOversize(oversizeCount)
+        totalAmount += priceRegular(regularCount)
+
         return totalAmount;
+    }
+
+    // Compute subtotal if there were no bundle deals applied
+    const getCartSinglesAmount = () => {
+        let total = 0
+        for (const items in cartItems) {
+            const [productId, variantId] = items.split('::')
+            const itemInfo = products.find((product) => product._id === productId)
+            for (const size in cartItems[items]) {
+                try {
+                    const qty = cartItems[items][size]
+                    if (qty > 0 && itemInfo) {
+                        const sc = (itemInfo.subCategory || '').toLowerCase()
+                        if (sc === 'oversize') {
+                            total += 499 * qty
+                        } else if (sc === 'regular fit') {
+                            total += 299 * qty
+                        } else {
+                            let price = itemInfo.price
+                            if (variantId && itemInfo.variants) {
+                                const v = itemInfo.variants.find(vv => (vv.id && vv.id.toString() === variantId.toString()) || itemInfo.variants.indexOf(vv) === Number(variantId))
+                                if (v && v.price) price = v.price
+                            }
+                            total += price * qty
+                        }
+                    }
+                } catch (e) {
+                    // ignore bad items
+                }
+            }
+        }
+        return total
     }
 
     const getProductsData = async () => {
@@ -176,7 +239,7 @@ const ShopContextProvider = (props) => {
         search, setSearch, showSearch, setShowSearch,
         cartItems, addToCart,setCartItems,
         getCartCount, updateQuantity,
-        getCartAmount, navigate, backendUrl,
+    getCartAmount, getCartSinglesAmount, navigate, backendUrl,
         setToken, token
     }
 

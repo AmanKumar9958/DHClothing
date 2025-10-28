@@ -8,7 +8,7 @@ import { toast } from 'react-toastify'
 const PlaceOrder = () => {
 
     const [method, setMethod] = useState('razorpay');
-    const { navigate, backendUrl, token, cartItems, setCartItems, getCartAmount, delivery_fee, products, currency } = useContext(ShopContext);
+    const { navigate, backendUrl, token, cartItems, setCartItems, products, currency } = useContext(ShopContext);
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -29,6 +29,12 @@ const PlaceOrder = () => {
         const value = event.target.value
         setFormData(data => ({ ...data, [name]: value }))
     }
+    const shippingFee = method === 'cod' ? 79 : 0
+
+    // Clear applied coupon when payment method changes (amount basis differs)
+    // Users can re-apply so totals stay consistent with fee
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
 
     // Build order items and compute subtotal from cart + products
     const buildOrderItemsAndSubtotal = () => {
@@ -97,7 +103,7 @@ const PlaceOrder = () => {
         event.preventDefault()
         try {
             const { items: orderItems, subtotal } = buildOrderItemsAndSubtotal()
-            let baseAmount = subtotal + delivery_fee
+            let baseAmount = subtotal + shippingFee
             let finalAmount = baseAmount
             if (couponInfo && couponInfo.discount) {
                 finalAmount = couponInfo.newAmount
@@ -186,7 +192,7 @@ const PlaceOrder = () => {
             <div className='mt-8'>
 
                 <div className='mt-8 min-w-80'>
-                    <CartTotal />
+                    <CartTotal deliveryFee={shippingFee} />
                 </div>
 
                 <div className='mt-12'>
@@ -199,7 +205,7 @@ const PlaceOrder = () => {
                                 if (!couponCode) return toast.error('Enter coupon code')
                                 setCouponLoading(true)
                                 const { subtotal } = buildOrderItemsAndSubtotal()
-                                const res = await axios.post(backendUrl + '/api/coupon/verify', { code: couponCode, amount: subtotal + delivery_fee })
+                                const res = await axios.post(backendUrl + '/api/coupon/verify', { code: couponCode, amount: subtotal + shippingFee })
                                 setCouponLoading(false)
                                     if (res.data.success) {
                                         // normalize returned fields for use in the UI
@@ -228,12 +234,12 @@ const PlaceOrder = () => {
                             <p className={`min-w-3.5 h-3.5 border rounded-full ${method === 'stripe' ? 'bg-green-400' : ''}`}></p>
                             <img className='h-5 mx-4' src={assets.stripe_logo} alt="" />
                         </div> */}
-                        <div onClick={() => setMethod('razorpay')} className='flex items-center gap-3 border p-2 px-3 cursor-pointer'>
+                        <div onClick={() => { setMethod('razorpay'); setCouponInfo(null); }} className='flex items-center gap-3 border p-2 px-3 cursor-pointer'>
                             <p className={`min-w-3.5 h-3.5 border rounded-full ${method === 'razorpay' ? 'bg-green-400' : ''}`}></p>
                             {/* <img className='h-5 mx-4' src={assets.razorpay_logo} alt="" /> */}
                             <p className='text-gray-500 text-sm font-medium mx-4'>PAY ONLINE</p>
                         </div>
-                        <div onClick={() => setMethod('cod')} className='flex items-center gap-3 border p-2 px-3 cursor-pointer'>
+                        <div onClick={() => { setMethod('cod'); setCouponInfo(null); }} className='flex items-center gap-3 border p-2 px-3 cursor-pointer'>
                             <p className={`min-w-3.5 h-3.5 border rounded-full ${method === 'cod' ? 'bg-green-400' : ''}`}></p>
                             <p className='text-gray-500 text-sm font-medium mx-4'>CASH ON DELIVERY</p>
                         </div>
