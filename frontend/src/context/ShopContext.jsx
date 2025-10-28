@@ -18,6 +18,59 @@ const ShopContextProvider = (props) => {
     const [token, setToken] = useState('')
     const navigate = useNavigate();
 
+    // Compute bundle and singles totals for an arbitrary cart snapshot
+    const computeBundleAndSingles = (snapshot) => {
+        let bundleTotal = 0
+        let singlesTotal = 0
+        let oversizeCount = 0, oversizeBase = 0
+        let regularCount = 0, regularBase = 0
+
+        for (const items in snapshot) {
+            const [productId, variantId] = items.split('::')
+            const itemInfo = products.find((product) => product._id === productId)
+            for (const size in snapshot[items]) {
+                const qty = snapshot[items][size]
+                if (!qty || !itemInfo) continue
+                let price = itemInfo.price
+                if (variantId && itemInfo.variants) {
+                    const v = itemInfo.variants.find(vv => (vv.id && vv.id.toString() === variantId.toString()) || itemInfo.variants.indexOf(vv) === Number(variantId))
+                    if (v && v.price) price = v.price
+                }
+                // singles always adds raw price
+                singlesTotal += price * qty
+                const sc = (itemInfo.subCategory || '').toLowerCase()
+                if (sc === 'oversize') {
+                    oversizeCount += qty
+                    oversizeBase += price * qty
+                } else if (sc === 'regular fit') {
+                    regularCount += qty
+                    regularBase += price * qty
+                } else {
+                    bundleTotal += price * qty
+                }
+            }
+        }
+
+        const priceOversize = (n) => {
+            let t = 0
+            while (n >= 3) { t += 999; n -= 3 }
+            if (n === 2) t += 799
+            else if (n === 1) t += 499
+            return t
+        }
+        const priceRegular = (n) => {
+            let t = 0
+            while (n >= 4) { t += 999; n -= 4 }
+            while (n >= 3) { t += 799; n -= 3 }
+            if (n > 0) t += n * 299
+            return t
+        }
+
+        bundleTotal += Math.min(oversizeBase, priceOversize(oversizeCount))
+        bundleTotal += Math.min(regularBase, priceRegular(regularCount))
+        return { bundleTotal, singlesTotal }
+    }
+
 
     const addToCart = async (itemId, size, variantId = null) => {
 
@@ -33,7 +86,10 @@ const ShopContextProvider = (props) => {
             return;
         }
 
-        let cartData = structuredClone(cartItems);
+    // detect bundle threshold before add
+    const before = computeBundleAndSingles(cartItems)
+
+    let cartData = structuredClone(cartItems);
 
         // use composite item key when variant selected
         const key = variantId ? `${itemId}::${variantId}` : itemId
@@ -51,7 +107,14 @@ const ShopContextProvider = (props) => {
         }
         setCartItems(cartData);
         // notify user
-        toast.success('Added to cart');
+        const after = computeBundleAndSingles(cartData)
+        const beforeDeal = before.bundleTotal < before.singlesTotal
+        const afterDeal = after.bundleTotal < after.singlesTotal
+        if (!beforeDeal && afterDeal) {
+            toast.success('Bundle pricing applied')
+        } else {
+            toast.success('Added to cart');
+        }
 
         try {
             await axios.post(backendUrl + '/api/cart/add', { itemId, size, variantId }, { headers: { token } })
@@ -80,11 +143,21 @@ const ShopContextProvider = (props) => {
 
     const updateQuantity = async (itemId, size, quantity) => {
 
+        const before = computeBundleAndSingles(cartItems)
+
         let cartData = structuredClone(cartItems);
 
         cartData[itemId][size] = quantity;
 
         setCartItems(cartData)
+
+        // toast when a bundle kicks in via quantity change (increase)
+        const after = computeBundleAndSingles(cartData)
+        const beforeDeal = before.bundleTotal < before.singlesTotal
+        const afterDeal = after.bundleTotal < after.singlesTotal
+        if (!beforeDeal && afterDeal) {
+            toast.success('Bundle pricing applied')
+        }
 
         // toast for removal
         if (quantity === 0) {
