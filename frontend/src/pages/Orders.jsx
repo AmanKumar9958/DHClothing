@@ -2,18 +2,22 @@ import React, { useContext, useEffect, useState } from 'react'
 import { ShopContext } from '../context/ShopContext'
 import Title from '../components/Title';
 import axios from 'axios';
+import LoadingSpinner from '../components/LoadingSpinner';
+import LazyImage from '../components/LazyImage';
 
 const Orders = () => {
 
   const { backendUrl, token , currency} = useContext(ShopContext);
 
   const [orderData,setorderData] = useState([])
+  const [loading, setLoading] = useState(false);
 
   const loadOrderData = async () => {
     try {
       if (!token) {
         return null
       }
+      setLoading(true);
 
       const response = await axios.post(backendUrl + '/api/order/userorders',{},{headers:{token}})
       if (response.data.success) {
@@ -35,6 +39,8 @@ const Orders = () => {
       
     } catch (error) {
       console.log(error)
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -49,12 +55,23 @@ const Orders = () => {
             <Title text1={'MY'} text2={'ORDERS'}/>
         </div>
 
-        <div>
+        {loading ? (
+          <div className='py-10'>
+            <LoadingSpinner />
+          </div>
+        ) : (
+          <div>
             {
               orderData.map((item,index) => (
                 <div key={index} className='py-4 border-t border-b text-gray-700 flex flex-col md:flex-row md:items-center md:justify-between gap-4'>
                     <div className='flex items-start gap-6 text-sm'>
-                        <img className='w-16 sm:w-20' src={item.image[0]} alt="" />
+                        <LazyImage 
+                            className='w-full h-full object-cover' 
+                            wrapperClassName='w-16 sm:w-20'
+                            src={item.image[0]} 
+                            alt={item.name} 
+                            skeletonClass="w-full h-20"
+                        />
                         <div>
                           <p className='sm:text-base font-medium'>{item.name}</p>
                           {item.couponCode && (
@@ -97,6 +114,7 @@ const Orders = () => {
               ))
             }
         </div>
+        )}
     </div>
   )
 }

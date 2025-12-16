@@ -16,6 +16,7 @@ const ShopContextProvider = (props) => {
     const [cartItems, setCartItems] = useState({});
     const [products, setProducts] = useState([]);
     const [token, setToken] = useState('')
+    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
     // Compute bundle and singles totals for an arbitrary cart snapshot
@@ -263,6 +264,7 @@ const ShopContextProvider = (props) => {
     }
 
     const getProductsData = async () => {
+        setLoading(true);
         try {
 
             const response = await axios.get(backendUrl + '/api/product/list')
@@ -275,6 +277,8 @@ const ShopContextProvider = (props) => {
         } catch (error) {
             console.log(error)
             toast.error(error.message)
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -311,7 +315,7 @@ const ShopContextProvider = (props) => {
         cartItems, addToCart,setCartItems,
         getCartCount, updateQuantity,
     getCartAmount, getCartSinglesAmount, navigate, backendUrl,
-        setToken, token
+        setToken, token, loading
     }
 
     return (

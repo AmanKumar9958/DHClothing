@@ -2,10 +2,13 @@ import { useContext, useMemo } from 'react'
 import { ShopContext } from '../context/ShopContext'
 import Title from '../components/Title'
 import ProductItem from '../components/ProductItem'
+import LoadingSpinner from '../components/LoadingSpinner'
 
 const ExclusivePage = () => {
-  const { products } = useContext(ShopContext)
+  const { products, loading } = useContext(ShopContext)
   const exclusive = useMemo(() => (products || []).filter(p => p.exclusive), [products])
+
+  if (loading) return <div className='pt-10 border-t'><LoadingSpinner /></div>
 
   return (
     <div className='pt-10 border-t'>

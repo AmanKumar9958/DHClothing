@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext';
 import { assets } from '../assets/assets';
 import RelatedProducts from '../components/RelatedProducts';
+import LazyImage from '../components/LazyImage';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const Product = () => {
 
@@ -12,6 +14,7 @@ const Product = () => {
     const [image, setImage] = useState(''); // State for the large image URL
     const [size, setSize] = useState('');
     const [selectedVariantIndex, setSelectedVariantIndex] = useState(null);
+    const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
     // Effect to find the product and set initial state when productId or products change
     useEffect(() => {
@@ -75,7 +78,7 @@ const Product = () => {
 
     // Render loading or not found state if productData isn't ready
     if (!productData) {
-        return <div className='border-t-2 pt-10 text-center'>Loading product...</div>;
+        return <div className='border-t-2 pt-10 text-center'><LoadingSpinner /></div>;
     }
 
     return (
@@ -86,22 +89,27 @@ const Product = () => {
                 {/*---------- Product Images------------- */}
                 <div className='flex-1 flex flex-col-reverse gap-3 sm:flex-row'>
                     {/* --- Corrected Thumbnail Container --- */}
-                    <div className='flex sm:flex-col overflow-x-auto sm:overflow-y-auto sm:max-h-[75vh] sm:w-[18.7%] w-full gap-3'>
+                    <div className='flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-normal sm:w-[18.7%] w-full gap-3'>
                         {gallery.map((item, index) => (
-                            <div key={index} className={`flex-shrink-0 sm:flex-shrink w-24 h-24 sm:w-full sm:h-20 rounded-sm border overflow-hidden ${image === item ? 'ring-2 ring-orange-400' : 'ring-0'}`}>
-                                {/* --- Corrected Thumbnail Image --- */}
-                                <img
-                                    onClick={() => setImage(item)}
-                                    src={item}
-                                    className={`block w-full h-full cursor-pointer object-cover`}
-                                    alt={`Thumbnail ${index + 1}`}
-                                />
-                            </div>
+                            <LazyImage
+                                onClick={() => setImage(item)}
+                                src={item}
+                                key={index}
+                                className={`w-full h-full cursor-pointer object-cover`}
+                                wrapperClassName={`w-[24%] sm:w-full flex-shrink-0 rounded-sm border ${image === item ? 'border-orange-500' : ''}`}
+                                skeletonClass="w-full h-full"
+                                alt={`Thumbnail ${index + 1}`}
+                            />
                         ))}
                     </div>
                      {/* --- Main Image --- */}
-                    <div className='w-full sm:w-[80%] flex items-center justify-center bg-gray-100 rounded'>
-                        <img className='max-w-full max-h-[75vh] object-contain rounded' src={image || assets.placeholder} alt={productData.name} />
+                    <div className='w-full sm:w-[80%]'>
+                        <LazyImage 
+                            className='w-full h-auto object-cover rounded' 
+                            src={image || assets.placeholder} 
+                            alt={productData.name} 
+                            skeletonClass="w-full h-96"
+                        />
                     </div>
                 </div>
 
@@ -115,7 +123,21 @@ const Product = () => {
                         {/* <p className='pl-2 text-sm'>(122)</p> Placeholder count */}
                     </div>
                     <p className='mt-5 text-3xl font-semibold'>{currency}{productData.price.toFixed(2)}</p>
-                    <p className='mt-5 text-gray-600 text-sm md:w-4/5'>{productData.description}</p>
+                    <div className='mt-5 text-gray-600 text-sm md:w-4/5'>
+                        <p>
+                            {isDescriptionExpanded 
+                                ? productData.description 
+                                : `${productData.description.slice(0, 250)}...`}
+                        </p>
+                        {productData.description.length > 250 && (
+                            <button 
+                                onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                                className='text-blue-500 hover:underline mt-1'
+                            >
+                                {isDescriptionExpanded ? 'Read Less' : 'Read More'}
+                            </button>
+                        )}
+                    </div>
 
                     {/* --- Color Swatches --- */}
                      {productData.variants && productData.variants.length > 0 && (

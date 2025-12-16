@@ -3,12 +3,14 @@ import { ShopContext } from '../context/ShopContext'
 import Title from './Title'
 import ProductItem from './ProductItem'
 import { Link } from 'react-router-dom'
+import LoadingSpinner from './LoadingSpinner'
 
 const Exclusive = () => {
-  const { products } = useContext(ShopContext)
+  const { products, loading } = useContext(ShopContext)
   const exclusive = useMemo(() => (products || []).filter(p => p.exclusive), [products])
   const top = exclusive.slice(0, 4)
 
+  if (loading) return <LoadingSpinner />
   if (top.length === 0) return null
 
   return (

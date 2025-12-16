@@ -1,5 +1,6 @@
 import React from 'react'
 import { assets } from '../assets/assets'
+import LazyImage from './LazyImage'
 
 const Hero = () => {
   return (
@@ -19,7 +20,13 @@ const Hero = () => {
             </div>
       </div>
       {/* Hero Right Side */}
-      <img className='w-full sm:w-1/2' src={assets.hero_img} alt="" />
+      <LazyImage 
+        className='w-full h-full object-cover' 
+        wrapperClassName='w-full sm:w-1/2'
+        src={assets.hero_img} 
+        alt="" 
+        skeletonClass="w-full h-64 sm:h-96"
+      />
     </div>
   )
 }
