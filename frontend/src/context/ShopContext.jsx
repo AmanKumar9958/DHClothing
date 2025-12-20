@@ -25,6 +25,7 @@ const ShopContextProvider = (props) => {
         let singlesTotal = 0
         let oversizeCount = 0, oversizeBase = 0
         let regularCount = 0, regularBase = 0
+        let hoodieCount = 0, hoodieBase = 0
 
         for (const items in snapshot) {
             const [productId, variantId] = items.split('::')
@@ -46,6 +47,9 @@ const ShopContextProvider = (props) => {
                 } else if (sc === 'regular fit') {
                     regularCount += qty
                     regularBase += price * qty
+                } else if (sc === 'hoodie') {
+                    hoodieCount += qty
+                    hoodieBase += price * qty
                 } else {
                     bundleTotal += price * qty
                 }
@@ -66,9 +70,16 @@ const ShopContextProvider = (props) => {
             if (n > 0) t += n * 299
             return t
         }
+        const priceHoodie = (n) => {
+            let t = 0
+            while (n >= 2) { t += 999; n -= 2 }
+            if (n === 1) t += 599
+            return t
+        }
 
         bundleTotal += Math.min(oversizeBase, priceOversize(oversizeCount))
         bundleTotal += Math.min(regularBase, priceRegular(regularCount))
+        bundleTotal += Math.min(hoodieBase, priceHoodie(hoodieCount))
         return { bundleTotal, singlesTotal }
     }
 
@@ -182,6 +193,7 @@ const ShopContextProvider = (props) => {
         let totalAmount = 0;
         let oversizeCount = 0, oversizeBase = 0;
         let regularCount = 0, regularBase = 0;
+        let hoodieCount = 0, hoodieBase = 0;
 
         // 1) Aggregate counts and base prices for special groups; add other items directly
         for (const items in cartItems) {
@@ -205,6 +217,9 @@ const ShopContextProvider = (props) => {
                         } else if (sc === 'regular fit') {
                             regularCount += qty
                             regularBase += price * qty
+                        } else if (sc === 'hoodie') {
+                            hoodieCount += qty
+                            hoodieBase += price * qty
                         } else {
                             totalAmount += price * qty
                         }
@@ -230,10 +245,17 @@ const ShopContextProvider = (props) => {
             if (n > 0) t += n * 299
             return t
         }
+        const priceHoodie = (n) => {
+            let t = 0
+            while (n >= 2) { t += 999; n -= 2 }
+            if (n === 1) t += 599
+            return t
+        }
 
         // 3) Add the better of (base sum) vs (bundle price) so deals never increase cost
         totalAmount += Math.min(oversizeBase, priceOversize(oversizeCount))
         totalAmount += Math.min(regularBase, priceRegular(regularCount))
+        totalAmount += Math.min(hoodieBase, priceHoodie(hoodieCount))
 
         return totalAmount;
     }

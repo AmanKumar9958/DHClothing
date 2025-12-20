@@ -11,7 +11,8 @@ const ProductItem = ({id,image,name,price}) => {
     <Link onClick={()=>scrollTo(0,0)} className='text-gray-700 cursor-pointer' to={`/product/${id}`}>
       <div className=' overflow-hidden'>
         <LazyImage 
-          className='hover:scale-110 transition ease-in-out' 
+          className=''
+          wrapperClassName='hover:scale-110 transition-all ease-in-out duration-300'
           src={image[0]} 
           alt={name} 
           skeletonClass="w-full h-64"

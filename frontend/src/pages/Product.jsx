@@ -5,6 +5,7 @@ import { assets } from '../assets/assets';
 import RelatedProducts from '../components/RelatedProducts';
 import LazyImage from '../components/LazyImage';
 import LoadingSpinner from '../components/LoadingSpinner';
+import FadeIn from '../components/FadeIn';
 
 const Product = () => {
 
@@ -82,122 +83,124 @@ const Product = () => {
     }
 
     return (
-        <div className='border-t-2 pt-10 transition-opacity ease-in duration-500 opacity-100'>
-            {/*----------- Product Data-------------- */}
-            <div className='flex gap-6 sm:gap-12 flex-col sm:flex-row max-w-6xl mx-auto px-4'>
+        <FadeIn>
+            <div className='border-t-2 pt-10 transition-opacity ease-in duration-500 opacity-100'>
+                {/*----------- Product Data-------------- */}
+                <div className='flex gap-6 sm:gap-12 flex-col sm:flex-row max-w-6xl mx-auto px-4'>
 
-                {/*---------- Product Images------------- */}
-                <div className='flex-1 flex flex-col-reverse gap-3 sm:flex-row'>
-                    {/* --- Corrected Thumbnail Container --- */}
-                    <div className='flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-normal sm:w-[18.7%] w-full gap-3'>
-                        {gallery.map((item, index) => (
-                            <LazyImage
-                                onClick={() => setImage(item)}
-                                src={item}
-                                key={index}
-                                className={`w-full h-full cursor-pointer object-cover`}
-                                wrapperClassName={`w-[24%] sm:w-full flex-shrink-0 rounded-sm border ${image === item ? 'border-orange-500' : ''}`}
-                                skeletonClass="w-full h-full"
-                                alt={`Thumbnail ${index + 1}`}
+                    {/*---------- Product Images------------- */}
+                    <div className='flex-1 flex flex-col-reverse gap-3 sm:flex-row'>
+                        {/* --- Corrected Thumbnail Container --- */}
+                        <div className='flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-normal sm:w-[18.7%] w-full gap-3'>
+                            {gallery.map((item, index) => (
+                                <LazyImage
+                                    onClick={() => setImage(item)}
+                                    src={item}
+                                    key={index}
+                                    className={`w-full h-full cursor-pointer object-cover`}
+                                    wrapperClassName={`w-[24%] sm:w-full flex-shrink-0 rounded-sm border ${image === item ? 'border-orange-500' : ''}`}
+                                    skeletonClass="w-full h-full"
+                                    alt={`Thumbnail ${index + 1}`}
+                                />
+                            ))}
+                        </div>
+                        {/* --- Main Image --- */}
+                        <div className='w-full sm:w-[80%]'>
+                            <LazyImage 
+                                className='w-full h-auto object-cover rounded' 
+                                src={image || assets.placeholder} 
+                                alt={productData.name} 
+                                skeletonClass="w-full h-96"
                             />
-                        ))}
+                        </div>
                     </div>
-                     {/* --- Main Image --- */}
-                    <div className='w-full sm:w-[80%]'>
-                        <LazyImage 
-                            className='w-full h-auto object-cover rounded' 
-                            src={image || assets.placeholder} 
-                            alt={productData.name} 
-                            skeletonClass="w-full h-96"
-                        />
-                    </div>
-                </div>
 
-                {/* -------- Product Info ---------- */}
-                <div className='flex-1'>
-                    <h1 className='font-medium text-2xl mt-2'>{productData.name}</h1>
-                    {/* Star Rating Placeholder */}
-                    <div className=' flex items-center gap-1 mt-2 text-gray-400'>
-                        {/* Replace with actual rating logic if available */}
-                        {/* {[...Array(5)].map((_, i) => <img key={i} src={i < 4 ? assets.star_icon : assets.star_dull_icon} alt="" className="w-3.5" />)} */}
-                        {/* <p className='pl-2 text-sm'>(122)</p> Placeholder count */}
-                    </div>
-                    <p className='mt-5 text-3xl font-semibold'>{currency}{productData.price.toFixed(2)}</p>
-                    <div className='mt-5 text-gray-600 text-sm md:w-4/5'>
-                        <p>
-                            {isDescriptionExpanded 
-                                ? productData.description 
-                                : `${productData.description.slice(0, 250)}...`}
-                        </p>
-                        {productData.description.length > 250 && (
-                            <button 
-                                onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                                className='text-blue-500 hover:underline mt-1'
-                            >
-                                {isDescriptionExpanded ? 'Read Less' : 'Read More'}
-                            </button>
+                    {/* -------- Product Info ---------- */}
+                    <div className='flex-1'>
+                        <h1 className='font-medium text-2xl mt-2'>{productData.name}</h1>
+                        {/* Star Rating Placeholder */}
+                        <div className=' flex items-center gap-1 mt-2 text-gray-400'>
+                            {/* Replace with actual rating logic if available */}
+                            {/* {[...Array(5)].map((_, i) => <img key={i} src={i < 4 ? assets.star_icon : assets.star_dull_icon} alt="" className="w-3.5" />)} */}
+                            {/* <p className='pl-2 text-sm'>(122)</p> Placeholder count */}
+                        </div>
+                        <p className='mt-5 text-3xl font-semibold'>{currency}{productData.price.toFixed(2)}</p>
+                        <div className='mt-5 text-gray-600 text-sm md:w-4/5'>
+                            <p>
+                                {isDescriptionExpanded 
+                                    ? productData.description 
+                                    : `${productData.description.slice(0, 250)}...`}
+                            </p>
+                            {productData.description.length > 250 && (
+                                <button 
+                                    onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                                    className='text-blue-500 hover:underline mt-1'
+                                >
+                                    {isDescriptionExpanded ? 'Read Less' : 'Read More'}
+                                </button>
+                            )}
+                        </div>
+
+                        {/* --- Color Swatches --- */}
+                        {productData.variants && productData.variants.length > 0 && (
+                            <div className='my-8'>
+                                <p className='font-medium mb-2'>Color: <span className='font-normal'>{productData.variants[selectedVariantIndex]?.color}</span></p>
+                                <div className='flex flex-wrap gap-2'>
+                                    {productData.variants.map((v, idx) => (
+                                        <button
+                                            key={idx}
+                                            onClick={() => {
+                                                setSelectedVariantIndex(idx);
+                                                const newGallery = (v.images && v.images.length) ? v.images : productData.image || [];
+                                                setImage(newGallery[0] || ''); // Set first image of new variant
+                                            }}
+                                            className={`w-8 h-8 rounded-full border-2 p-0.5 ${selectedVariantIndex === idx ? 'border-black ring-2 ring-offset-1 ring-black' : 'border-gray-300'}`}
+                                            title={v.color}
+                                        >
+                                            <div
+                                            className="w-full h-full rounded-full border border-gray-200"
+                                            style={{ backgroundColor: v.colorHex || '#eee' }}
+                                            ></div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
                         )}
-                    </div>
 
-                    {/* --- Color Swatches --- */}
-                     {productData.variants && productData.variants.length > 0 && (
-                        <div className='my-8'>
-                            <p className='font-medium mb-2'>Color: <span className='font-normal'>{productData.variants[selectedVariantIndex]?.color}</span></p>
+
+                        {/* --- Size Selection --- */}
+                        <div className='flex flex-col gap-3 my-8'>
+                            <p className='font-medium'>Select Size</p>
                             <div className='flex flex-wrap gap-2'>
-                                {productData.variants.map((v, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => {
-                                            setSelectedVariantIndex(idx);
-                                            const newGallery = (v.images && v.images.length) ? v.images : productData.image || [];
-                                            setImage(newGallery[0] || ''); // Set first image of new variant
-                                        }}
-                                        className={`w-8 h-8 rounded-full border-2 p-0.5 ${selectedVariantIndex === idx ? 'border-black ring-2 ring-offset-1 ring-black' : 'border-gray-300'}`}
-                                        title={v.color}
-                                    >
-                                        <div
-                                          className="w-full h-full rounded-full border border-gray-200"
-                                          style={{ backgroundColor: v.colorHex || '#eee' }}
-                                        ></div>
-                                    </button>
+                                {productData.sizes && productData.sizes.map((item, index) => (
+                                    <button onClick={() => setSize(item)} className={`border py-2 px-4 rounded ${item === size ? 'bg-black text-white border-black' : 'bg-gray-100 hover:bg-gray-200'}`} key={index}>{item}</button>
                                 ))}
                             </div>
                         </div>
-                    )}
 
-
-                    {/* --- Size Selection --- */}
-                    <div className='flex flex-col gap-3 my-8'>
-                        <p className='font-medium'>Select Size</p>
-                        <div className='flex flex-wrap gap-2'>
-                            {productData.sizes && productData.sizes.map((item, index) => (
-                                <button onClick={() => setSize(item)} className={`border py-2 px-4 rounded ${item === size ? 'bg-black text-white border-black' : 'bg-gray-100 hover:bg-gray-200'}`} key={index}>{item}</button>
-                            ))}
+                        <button onClick={handleAddToCart} className='w-full sm:w-auto bg-black text-white px-8 py-3 text-sm font-medium rounded active:bg-gray-700 hover:bg-gray-800 transition-colors'>ADD TO CART</button>
+                        
+                        <hr className='mt-8 sm:w-4/5 border-gray-200' />
+                        <div className='text-xs text-gray-500 mt-5 flex flex-col gap-1'>
+                            <p>✓ 100% Original product.</p>
+                            <p>✓ Cash on delivery is available.</p>
+                            <p>✓ Easy 7-day return and exchange policy.</p>
                         </div>
                     </div>
-
-                    <button onClick={handleAddToCart} className='w-full sm:w-auto bg-black text-white px-8 py-3 text-sm font-medium rounded active:bg-gray-700 hover:bg-gray-800 transition-colors'>ADD TO CART</button>
-                    
-                    <hr className='mt-8 sm:w-4/5 border-gray-200' />
-                    <div className='text-xs text-gray-500 mt-5 flex flex-col gap-1'>
-                        <p>✓ 100% Original product.</p>
-                        <p>✓ Cash on delivery is available.</p>
-                        <p>✓ Easy 7-day return and exchange policy.</p>
-                    </div>
                 </div>
+
+                {/* ---------- Description & Review Section Placeholder ------------- */}
+                {/* <div className='mt-20 max-w-6xl mx-auto px-4'> */}
+                    {/* Add Description/Review tabs here if needed */}
+                {/* </div> */}
+
+                {/* --------- Display related products ---------- */}
+                <div className='mt-20 max-w-6xl mx-auto px-4'>
+                    <RelatedProducts category={productData.category} subCategory={productData.subCategory} />
+                </div>
+
             </div>
-
-            {/* ---------- Description & Review Section Placeholder ------------- */}
-            {/* <div className='mt-20 max-w-6xl mx-auto px-4'> */}
-                {/* Add Description/Review tabs here if needed */}
-            {/* </div> */}
-
-            {/* --------- Display related products ---------- */}
-            <div className='mt-20 max-w-6xl mx-auto px-4'>
-                <RelatedProducts category={productData.category} subCategory={productData.subCategory} />
-            </div>
-
-        </div>
+        </FadeIn>
     );
 };
 
