@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { backendUrl } from '../App'
 import { toast } from 'react-toastify'
+import LoadingSpinner from '../components/LoadingSpinner'
 
 const Coupons = ({ token }) => {
 
@@ -10,13 +11,17 @@ const Coupons = ({ token }) => {
   const [value, setValue] = useState('')
   const [expiresAt, setExpiresAt] = useState('')
   const [coupons, setCoupons] = useState([])
+  const [loading, setLoading] = useState(false)
 
   const fetchCoupons = async () => {
     try {
+      setLoading(true)
       const response = await axios.get(backendUrl + '/api/coupon/list', { headers: { token } })
       if (response.data.success) setCoupons(response.data.coupons)
     } catch (error) {
       toast.error(error.message)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -62,17 +67,21 @@ const Coupons = ({ token }) => {
       </div>
 
       <div>
-        {coupons.map((c)=> (
-          <div key={c._id} className='flex items-center justify-between border p-3 mb-2'>
-            <div>
-              <p className='font-medium'>{c.code} {c.type === 'percent' ? `(${c.value}%)` : `(₹${c.value})`}</p>
-              <p className='text-xs text-gray-500'>Expires: {c.expiresAt ? new Date(c.expiresAt).toLocaleDateString() : 'Never'}</p>
+        {loading ? (
+          <LoadingSpinner />
+        ) : (
+          coupons.map((c)=> (
+            <div key={c._id} className='flex items-center justify-between border p-3 mb-2'>
+              <div>
+                <p className='font-medium'>{c.code} {c.type === 'percent' ? `(${c.value}%)` : `(₹${c.value})`}</p>
+                <p className='text-xs text-gray-500'>Expires: {c.expiresAt ? new Date(c.expiresAt).toLocaleDateString() : 'Never'}</p>
+              </div>
+              <div>
+                <button onClick={()=>toggle(c._id, !c.active)} className={`px-3 py-1 rounded ${c.active ? 'bg-green-400' : 'bg-gray-300'}`}>{c.active ? 'Active' : 'Inactive'}</button>
+              </div>
             </div>
-            <div>
-              <button onClick={()=>toggle(c._id, !c.active)} className={`px-3 py-1 rounded ${c.active ? 'bg-green-400' : 'bg-gray-300'}`}>{c.active ? 'Active' : 'Inactive'}</button>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   )

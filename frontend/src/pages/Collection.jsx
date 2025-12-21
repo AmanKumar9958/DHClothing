@@ -5,6 +5,7 @@ import Title from '../components/Title';
 import ProductItem from '../components/ProductItem';
 import LoadingSpinner from '../components/LoadingSpinner';
 import FadeIn from '../components/FadeIn';
+import { useLocation } from 'react-router-dom';
 
 const Collection = () => {
 
@@ -14,6 +15,13 @@ const Collection = () => {
   const [category,setCategory] = useState([]);
   const [subCategory,setSubCategory] = useState([]);
   const [sortType,setSortType] = useState('relavent')
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state && location.state.subCategory) {
+      setSubCategory([location.state.subCategory]);
+    }
+  }, [location.state])
 
   const toggleCategory = (e) => {
 
@@ -101,10 +109,13 @@ const Collection = () => {
             <p className='mb-3 text-sm font-medium'>CATEGORIES</p>
             <div className='flex flex-col gap-2 text-sm font-light text-gray-700'>
               <p className='flex gap-2'>
-                <input className='w-3' type="checkbox" value={'Men'} onChange={toggleCategory}/> Men
+                <input className='w-3' type="checkbox" value={'Men'} onChange={toggleCategory} checked={category.includes('Men')}/> Men
               </p>
               <p className='flex gap-2'>
-                <input className='w-3' type="checkbox" value={'Women'} onChange={toggleCategory}/> Women
+                <input className='w-3' type="checkbox" value={'Women'} onChange={toggleCategory} checked={category.includes('Women')}/> Women
+              </p>
+              <p className='flex gap-2'>
+                <input className='w-3' type="checkbox" value={'Kids'} onChange={toggleCategory} checked={category.includes('Kids')}/> Kids
               </p>
             </div>
           </div>
@@ -113,22 +124,22 @@ const Collection = () => {
             <p className='mb-3 text-sm font-medium'>TYPE</p>
             <div className='flex flex-col gap-2 text-sm font-light text-gray-700'>
               <p className='flex gap-2'>
-                <input className='w-3' type="checkbox" value={'Topwear'} onChange={toggleSubCategory}/> Topwear
+                <input className='w-3 hover:cursor-default' type="checkbox" value={'Topwear'} onChange={toggleSubCategory} checked={subCategory.includes('Topwear')}/> Topwear
               </p>
               <p className='flex gap-2'>
-                <input className='w-3' type="checkbox" value={'Bottomwear'} onChange={toggleSubCategory}/> Bottomwear
+                <input className='w-3 hover:cursor-default' type="checkbox" value={'Bottomwear'} onChange={toggleSubCategory} checked={subCategory.includes('Bottomwear')}/> Bottomwear
               </p>
               <p className='flex gap-2'>
-                <input className='w-3' type="checkbox" value={'Winterwear'} onChange={toggleSubCategory}/> Winterwear
+                <input className='w-3 hover:cursor-default' type="checkbox" value={'Winterwear'} onChange={toggleSubCategory} checked={subCategory.includes('Winterwear')}/> Winterwear
               </p>
               <p className='flex gap-2'>
-                <input className='w-3' type="checkbox" value={'Hoodie'} onChange={toggleSubCategory}/> Hoodie
+                <input className='w-3 hover:cursor-default' type="checkbox" value={'Hoodie'} onChange={toggleSubCategory} checked={subCategory.includes('Hoodie')}/> Hoodie
               </p>
               <p className='flex gap-2'>
-                <input className='w-3' type="checkbox" value={'Oversize'} onChange={toggleSubCategory}/> Oversize
+                <input className='w-3 hover:cursor-default' type="checkbox" value={'Oversize'} onChange={toggleSubCategory} checked={subCategory.includes('Oversize')}/> Oversize
               </p>
               <p className='flex gap-2'>
-                <input className='w-3' type="checkbox" value={'Regular fit'} onChange={toggleSubCategory}/> Regular fit
+                <input className='w-3 hover:cursor-default' type="checkbox" value={'Regular fit'} onChange={toggleSubCategory} checked={subCategory.includes('Regular fit')}/> Regular fit
               </p>
             </div>
           </div>
@@ -150,6 +161,10 @@ const Collection = () => {
           {/* Map Products */}
           {loading ? (
             <LoadingSpinner />
+          ) : filterProducts.length === 0 ? (
+            <div className="flex justify-center items-center h-[50vh] w-full">
+               <p className="text-xl text-gray-500">No items available</p>
+            </div>
           ) : (
             <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-6'>
               {

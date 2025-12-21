@@ -3,6 +3,7 @@ import {assets} from '../assets/assets'
 import axios from 'axios'
 import { backendUrl } from '../App'
 import { toast } from 'react-toastify'
+import LoadingSpinner from '../components/LoadingSpinner'
 
 const Add = ({token}) => {
 
@@ -11,6 +12,7 @@ const Add = ({token}) => {
   const [image3,setImage3] = useState(false)
   const [image4,setImage4] = useState(false)
   const [variants, setVariants] = useState([])
+  const [loading, setLoading] = useState(false)
 
    const [name, setName] = useState("");
    const [description, setDescription] = useState("");
@@ -25,6 +27,7 @@ const Add = ({token}) => {
     e.preventDefault();
 
     try {
+      setLoading(true)
       
       const formData = new FormData()
 
@@ -71,10 +74,14 @@ const Add = ({token}) => {
     } catch (error) {
       console.log(error);
       toast.error(error.message)
+    } finally {
+      setLoading(false)
     }
    }
 
-  return (
+  return loading ? (
+    <LoadingSpinner />
+  ) : (
     <form onSubmit={onSubmitHandler} className='flex flex-col w-full items-start gap-3'>
         <div>
           <p className='mb-2 font-bold'>Upload Cover Image</p>

@@ -29,7 +29,7 @@ const Product = () => {
                 if (firstVariant.images && firstVariant.images.length > 0) {
                     setImage(firstVariant.images[0]); // Set the first image of the first variant
                 } else {
-                    setImage(''); // Handle case where variant has no images
+                    setImage(foundProduct.image && foundProduct.image.length > 0 ? foundProduct.image[0] : ''); // Fallback to main image
                 }
             } else {
                 // Fallback if no variants (using your old logic)
@@ -108,7 +108,7 @@ const Product = () => {
                         <div className='w-full sm:w-[80%]'>
                             <LazyImage 
                                 className='w-full h-auto object-cover rounded' 
-                                src={image || assets.placeholder} 
+                                src={image || (gallery.length > 0 ? gallery[0] : assets.placeholder)} 
                                 alt={productData.name} 
                                 skeletonClass="w-full h-96"
                             />

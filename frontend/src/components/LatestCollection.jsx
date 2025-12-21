@@ -3,6 +3,7 @@ import { ShopContext } from '../context/ShopContext'
 import Title from './Title';
 import ProductItem from './ProductItem';
 import LoadingSpinner from './LoadingSpinner';
+import { Link } from 'react-router-dom';
 
 const LatestCollection = () => {
 
@@ -11,7 +12,7 @@ const LatestCollection = () => {
 
   useEffect(()=>{
     const nonExclusive = (products || []).filter(p => !p.exclusive);
-    setLatestProducts(nonExclusive.slice(0,10));
+    setLatestProducts(nonExclusive.slice(0,5));
   },[products])
 
   return (
@@ -27,13 +28,20 @@ const LatestCollection = () => {
       {loading ? (
         <LoadingSpinner />
       ) : (
-        <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 gap-y-6'>
-          {
-            latestProducts.map((item,index)=>(
-              <ProductItem key={index} id={item._id} image={item.image} name={item.name} price={item.price} />
-            ))
-          }
-        </div>
+        <>
+          <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 gap-y-6'>
+            {
+              latestProducts.map((item,index)=>(
+                <ProductItem key={index} id={item._id} image={item.image} name={item.name} price={item.price} />
+              ))
+            }
+          </div>
+          <div className='w-full text-center mt-10'>
+            <Link to='/collection' className='bg-black text-white px-8 py-3 text-sm active:bg-gray-700 rounded-xl hover:scale-115 transition-all duration-300 '>
+              SHOP NOW
+            </Link>
+          </div>
+        </>
       )}
     </div>
   )
