@@ -19,6 +19,37 @@ const ShopContextProvider = (props) => {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
+    const [coupon, setCoupon] = useState(null)
+    const [discountAmount, setDiscountAmount] = useState(0)
+
+    const applyCoupon = async (code) => {
+        try {
+            const amount = getCartAmount()
+            const response = await axios.post(backendUrl + '/api/coupon/verify', { code, amount })
+            if (response.data.success) {
+                setCoupon(response.data.coupon)
+                setDiscountAmount(response.data.discount)
+                toast.success('Coupon applied successfully')
+                return true
+            } else {
+                toast.error(response.data.message)
+                setCoupon(null)
+                setDiscountAmount(0)
+                return false
+            }
+        } catch (error) {
+            console.log(error)
+            toast.error(error.message)
+            return false
+        }
+    }
+
+    const removeCoupon = () => {
+        setCoupon(null)
+        setDiscountAmount(0)
+        toast.info('Coupon removed')
+    }
+
     // Compute bundle and singles totals for an arbitrary cart snapshot
     const computeBundleAndSingles = (snapshot) => {
         let bundleTotal = 0
@@ -260,6 +291,35 @@ const ShopContextProvider = (props) => {
         return totalAmount;
     }
 
+    // Recalculate discount when cart changes
+    useEffect(() => {
+        if (coupon) {
+            const amount = getCartAmount()
+            let d = 0
+            
+            // Check min subtotal
+            if (coupon.minSubtotal && amount < coupon.minSubtotal) {
+                d = 0
+            } else {
+                if (coupon.type === 'percent') {
+                    d = Math.round((amount * coupon.value) / 100)
+                } else {
+                    d = Number(coupon.value)
+                }
+
+                if (coupon.maxDiscount && coupon.maxDiscount > 0 && d > coupon.maxDiscount) {
+                    d = coupon.maxDiscount
+                }
+                
+                if (d > amount) d = amount
+            }
+
+            setDiscountAmount(d)
+        } else {
+            setDiscountAmount(0)
+        }
+    }, [cartItems, products, coupon])
+
     // Compute subtotal using normal item prices only (no bundle deals)
     const getCartSinglesAmount = () => {
         let total = 0
@@ -337,7 +397,8 @@ const ShopContextProvider = (props) => {
         cartItems, addToCart,setCartItems,
         getCartCount, updateQuantity,
     getCartAmount, getCartSinglesAmount, navigate, backendUrl,
-        setToken, token, loading
+        setToken, token, loading,
+        coupon, discountAmount, applyCoupon, removeCoupon
     }
 
     return (

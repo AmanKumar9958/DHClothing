@@ -6,7 +6,7 @@ import CartTotal from '../components/CartTotal';import LazyImage from '../compon
 import FadeIn from '../components/FadeIn';
 const Cart = () => {
 
-  const { products, currency, cartItems, updateQuantity, navigate, getCartAmount, getCartSinglesAmount } = useContext(ShopContext);
+  const { products, currency, cartItems, updateQuantity, navigate, getCartAmount, getCartSinglesAmount, applyCoupon, coupon, discountAmount, removeCoupon } = useContext(ShopContext);
 
   const [cartData, setCartData] = useState([]);
 
@@ -188,6 +188,33 @@ const Cart = () => {
 
         <div className='flex justify-end my-20'>
           <div className='w-full sm:w-[450px]'>
+              {/* Coupon Input */}
+              <div className='mb-4'>
+                  <div className='flex items-center gap-2 justify-end'>
+                      <input 
+                          type="text" 
+                          placeholder="Coupon Code" 
+                          className='border p-2 text-sm w-40'
+                          id="cart-coupon-input"
+                      />
+                      <button 
+                          onClick={() => {
+                              const input = document.getElementById('cart-coupon-input');
+                              if(input && input.value) applyCoupon(input.value);
+                          }}
+                          className='bg-black text-white px-3 py-2 text-sm'
+                      >
+                          Apply
+                      </button>
+                  </div>
+                  {coupon && (
+                      <div className='text-right mt-2 text-sm text-green-600'>
+                          Applied {coupon.code}: -{currency}{discountAmount}
+                          <button onClick={removeCoupon} className='ml-2 text-red-500 underline text-xs'>Remove</button>
+                      </div>
+                  )}
+              </div>
+
             {(() => {
               let shippingFee = 0;
               let shippingNote = "Shipping applies only for Cash on Delivery at checkout.";

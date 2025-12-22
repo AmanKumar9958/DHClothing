@@ -9,6 +9,8 @@ const Coupons = ({ token }) => {
   const [code, setCode] = useState('')
   const [type, setType] = useState('percent')
   const [value, setValue] = useState('')
+  const [minSubtotal, setMinSubtotal] = useState('')
+  const [maxDiscount, setMaxDiscount] = useState('')
   const [expiresAt, setExpiresAt] = useState('')
   const [coupons, setCoupons] = useState([])
   const [loading, setLoading] = useState(false)
@@ -29,11 +31,18 @@ const Coupons = ({ token }) => {
 
   const onAdd = async () => {
     try {
-      const payload = { code, type, value: Number(value), expiresAt: expiresAt ? new Date(expiresAt).getTime() : null }
+      const payload = { 
+        code, 
+        type, 
+        value: Number(value), 
+        minSubtotal: Number(minSubtotal),
+        maxDiscount: Number(maxDiscount),
+        expiresAt: expiresAt ? new Date(expiresAt).getTime() : null 
+      }
       const response = await axios.post(backendUrl + '/api/coupon/create', payload, { headers: { token } })
       if (response.data.success) {
         toast.success('Coupon added')
-        setCode(''); setValue(''); setExpiresAt(''); setType('percent')
+        setCode(''); setValue(''); setExpiresAt(''); setType('percent'); setMinSubtotal(''); setMaxDiscount('')
         fetchCoupons()
       } else {
         toast.error(response.data.message)
@@ -50,19 +59,39 @@ const Coupons = ({ token }) => {
     } catch (error) { toast.error(error.message) }
   }
 
+  const removeCoupon = async (id) => {
+    try {
+      const response = await axios.post(backendUrl + '/api/coupon/delete', { id }, { headers: { token } })
+      if (response.data.success) {
+        toast.success(response.data.message)
+        fetchCoupons()
+      } else {
+        toast.error(response.data.message)
+      }
+    } catch (error) {
+      toast.error(error.message)
+    }
+  }
+
   return (
     <div>
       <h3 className='text-xl font-medium mb-4'>Manage Coupons</h3>
       <div className='border p-4 mb-6'>
-        <div className='flex gap-3'>
-          <input value={code} onChange={e=>setCode(e.target.value)} className='border p-2' placeholder='Code (e.g. GET10OFF)' />
-          <select value={type} onChange={e=>setType(e.target.value)} className='border p-2'>
-            <option value='percent'>Percent (%)</option>
-            <option value='fixed'>Fixed (₹)</option>
-          </select>
-          <input value={value} onChange={e=>setValue(e.target.value)} className='border p-2' placeholder='Value' />
-          <input value={expiresAt} onChange={e=>setExpiresAt(e.target.value)} type='date' className='border p-2'  placeholder='Expiration Date' />
-          <button onClick={onAdd} className='bg-black text-white px-4 py-2'>Add Coupon</button>
+        <div className='flex flex-col gap-3'>
+          <div className='flex gap-3'>
+            <input value={code} onChange={e=>setCode(e.target.value)} className='border p-2 flex-1' placeholder='Code (e.g. GET10OFF)' />
+            <select value={type} onChange={e=>setType(e.target.value)} className='border p-2'>
+              <option value='percent'>Percent (%)</option>
+              <option value='fixed'>Fixed (₹)</option>
+            </select>
+            <input value={value} onChange={e=>setValue(e.target.value)} className='border p-2 w-24' placeholder='Value' />
+            <input value={expiresAt} onChange={e=>setExpiresAt(e.target.value)} type='date' className='border p-2'  placeholder='Expiration Date' />
+          </div>
+          <div className='flex gap-3'>
+            <input value={minSubtotal} onChange={e=>setMinSubtotal(e.target.value)} className='border p-2 flex-1' placeholder='Min Subtotal (₹)' />
+            <input value={maxDiscount} onChange={e=>setMaxDiscount(e.target.value)} className='border p-2 flex-1' placeholder='Max Discount (₹)' />
+            <button onClick={onAdd} className='bg-black text-white px-4 py-2'>Add Coupon</button>
+          </div>
         </div>
       </div>
 
@@ -74,10 +103,11 @@ const Coupons = ({ token }) => {
             <div key={c._id} className='flex items-center justify-between border p-3 mb-2'>
               <div>
                 <p className='font-medium'>{c.code} {c.type === 'percent' ? `(${c.value}%)` : `(₹${c.value})`}</p>
-                <p className='text-xs text-gray-500'>Expires: {c.expiresAt ? new Date(c.expiresAt).toLocaleDateString() : 'Never'}</p>
+                <p className='text-xs text-gray-500'>Expires: {c.expiresAt ? new Date(c.expiresAt).toLocaleDateString('en-GB') : 'Never'}</p>
               </div>
-              <div>
+              <div className='flex gap-2'>
                 <button onClick={()=>toggle(c._id, !c.active)} className={`px-3 py-1 rounded ${c.active ? 'bg-green-400' : 'bg-gray-300'}`}>{c.active ? 'Active' : 'Inactive'}</button>
+                <button onClick={()=>removeCoupon(c._id)} className='px-3 py-1 rounded bg-red-400 text-white'>Delete</button>
               </div>
             </div>
           ))

@@ -3,13 +3,20 @@ import couponModel from '../models/couponModel.js'
 // Admin: create a coupon
 const createCoupon = async (req,res) => {
     try {
-        const { code, type, value, expiresAt } = req.body
+        const { code, type, value, expiresAt, minSubtotal, maxDiscount } = req.body
         if (!code || !value) return res.json({success:false, message: 'Code and value are required'})
 
         const existing = await couponModel.findOne({ code: code.trim().toUpperCase() })
         if (existing) return res.json({ success:false, message: 'Coupon code already exists' })
 
-        const coupon = new couponModel({ code: code.trim().toUpperCase(), type, value, expiresAt: expiresAt || null })
+        const coupon = new couponModel({ 
+            code: code.trim().toUpperCase(), 
+            type, 
+            value, 
+            expiresAt: expiresAt || null,
+            minSubtotal: Number(minSubtotal) || 0,
+            maxDiscount: Number(maxDiscount) || 0
+        })
         await coupon.save()
         res.json({ success:true, coupon })
     } catch (error) {
@@ -51,19 +58,40 @@ const verifyCoupon = async (req,res) => {
         if (!coupon.active) return res.json({ success:false, message: 'Coupon is not active' })
         if (coupon.expiresAt && Date.now() > coupon.expiresAt) return res.json({ success:false, message: 'Coupon has expired' })
 
+        const numericAmount = Number(amount) || 0
+
+        if (coupon.minSubtotal && numericAmount < coupon.minSubtotal) {
+            return res.json({ success:false, message: `Minimum subtotal of ${coupon.minSubtotal} required` })
+        }
+
         // calculate discount
         let discount = 0
-        const numericAmount = Number(amount) || 0
         if (coupon.type === 'percent') {
             discount = Math.round((numericAmount * coupon.value) / 100)
         } else {
             discount = Number(coupon.value)
         }
+
+        if (coupon.maxDiscount && coupon.maxDiscount > 0 && discount > coupon.maxDiscount) {
+            discount = coupon.maxDiscount
+        }
+
         if (discount > numericAmount) discount = numericAmount
 
         const newAmount = Math.max(0, numericAmount - discount)
 
-        res.json({ success:true, coupon: { code: coupon.code, type: coupon.type, value: coupon.value }, discount, newAmount })
+        res.json({ 
+            success:true, 
+            coupon: { 
+                code: coupon.code, 
+                type: coupon.type, 
+                value: coupon.value,
+                minSubtotal: coupon.minSubtotal,
+                maxDiscount: coupon.maxDiscount
+            }, 
+            discount, 
+            newAmount 
+        })
 
     } catch (error) {
         console.log(error)
@@ -71,4 +99,16 @@ const verifyCoupon = async (req,res) => {
     }
 }
 
-export { createCoupon, listCoupons, toggleCoupon, verifyCoupon }
+// Admin: delete coupon
+const deleteCoupon = async (req,res) => {
+    try {
+        const { id } = req.body
+        await couponModel.findByIdAndDelete(id)
+        res.json({ success:true, message: 'Coupon deleted' })
+    } catch (error) {
+        console.log(error)
+        res.json({ success:false, message: error.message })
+    }
+}
+
+export { createCoupon, listCoupons, toggleCoupon, verifyCoupon, deleteCoupon }

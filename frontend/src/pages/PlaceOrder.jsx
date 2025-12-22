@@ -9,7 +9,7 @@ import FadeIn from '../components/FadeIn'
 const PlaceOrder = () => {
 
     const [method, setMethod] = useState('razorpay');
-    const { navigate, backendUrl, token, cartItems, setCartItems, products, currency } = useContext(ShopContext);
+    const { navigate, backendUrl, token, cartItems, setCartItems, products, currency, applyCoupon, coupon, discountAmount, removeCoupon, getCartAmount } = useContext(ShopContext);
     const [formData, setFormData] = useState({
         firstName: '',
         lastName: '',
@@ -21,8 +21,7 @@ const PlaceOrder = () => {
         country: '',
         phone: ''
     })
-    const [couponCode, setCouponCode] = useState('')
-    const [couponInfo, setCouponInfo] = useState(null)
+    const [couponCodeInput, setCouponCodeInput] = useState('')
     const [couponLoading, setCouponLoading] = useState(false)
 
     const onChangeHandler = (event) => {
@@ -125,16 +124,14 @@ const PlaceOrder = () => {
         try {
             const { items: orderItems, subtotal } = buildOrderItemsAndSubtotal()
             let baseAmount = subtotal + shippingFee
-            let finalAmount = baseAmount
-            if (couponInfo && couponInfo.discount) {
-                finalAmount = couponInfo.newAmount
-            }
+            let finalAmount = baseAmount - discountAmount
+            if (finalAmount < 0) finalAmount = 0
 
             let orderData = {
                 address: formData,
                 items: orderItems,
                 amount: finalAmount,
-                couponCode: couponInfo ? couponInfo.coupon.code : null
+                couponCode: coupon ? coupon.code : null
             }
             
 
@@ -221,33 +218,19 @@ const PlaceOrder = () => {
                         <Title text1={'PAYMENT'} text2={'METHOD'} />
                         <div className='mt-4 mb-4'>
                             <label className='text-sm mr-2'>Have a coupon?</label>
-                            <input value={couponCode} onChange={e=>setCouponCode(e.target.value)} className='border p-2 mr-2' placeholder='Enter coupon code' />
+                            <input value={couponCodeInput} onChange={e=>setCouponCodeInput(e.target.value)} className='border p-2 mr-2' placeholder='Enter coupon code' />
                             <button type='button' onClick={async ()=>{
-                                try {
-                                    if (!couponCode) return toast.error('Enter coupon code')
-                                    setCouponLoading(true)
-                                    const { subtotal } = buildOrderItemsAndSubtotal()
-                                    const res = await axios.post(backendUrl + '/api/coupon/verify', { code: couponCode, amount: subtotal + shippingFee })
-                                    setCouponLoading(false)
-                                        if (res.data.success) {
-                                            // normalize returned fields for use in the UI
-                                            setCouponInfo({
-                                                coupon: res.data.coupon,
-                                                discount: res.data.discount,
-                                                newAmount: res.data.newAmount
-                                            })
-                                            toast.success('Coupon applied')
-                                        } else {
-                                            toast.error(res.data.message)
-                                        }
-                                } catch (error) {
-                                    setCouponLoading(false)
-                                    toast.error(error.message)
-                                }
-                            }} className='bg-black text-white px-3 py-1 text-sm'>{couponLoading ? 'Checking...' : 'Add'}</button>
+                                if (!couponCodeInput) return toast.error('Enter coupon code')
+                                setCouponLoading(true)
+                                await applyCoupon(couponCodeInput)
+                                setCouponLoading(false)
+                            }} className='bg-black text-white px-3 py-1 text-sm'>{couponLoading ? 'Checking...' : 'Apply'}</button>
 
-                            {couponInfo && couponInfo.discount !== undefined && (
-                                <div className='mt-2 text-sm text-green-600'>Applied {couponInfo.coupon.code}: -{currency}{couponInfo.discount} (New total: {currency}{couponInfo.newAmount})</div>
+                            {coupon && (
+                                <div className='mt-2 text-sm text-green-600'>
+                                    Applied {coupon.code}: -{currency}{discountAmount}
+                                    <button type='button' onClick={()=>{ removeCoupon(); setCouponCodeInput('') }} className='ml-2 text-red-500 underline text-xs'>Remove</button>
+                                </div>
                             )}
                         </div>
                         {/* --------------- Payment Method Selection ------------- */}
@@ -256,12 +239,12 @@ const PlaceOrder = () => {
                                 <p className={`min-w-3.5 h-3.5 border rounded-full ${method === 'stripe' ? 'bg-green-400' : ''}`}></p>
                                 <img className='h-5 mx-4' src={assets.stripe_logo} alt="" />
                             </div> */}
-                            <div onClick={() => { setMethod('razorpay'); setCouponInfo(null); }} className='flex items-center gap-3 border p-2 px-3 cursor-pointer'>
+                            <div onClick={() => { setMethod('razorpay'); }} className='flex items-center gap-3 border p-2 px-3 cursor-pointer'>
                                 <p className={`min-w-3.5 h-3.5 border rounded-full ${method === 'razorpay' ? 'bg-green-400' : ''}`}></p>
                                 {/* <img className='h-5 mx-4' src={assets.razorpay_logo} alt="" /> */}
                                 <p className='text-gray-500 text-sm font-medium mx-4'>PAY ONLINE</p>
                             </div>
-                            <div onClick={() => { setMethod('cod'); setCouponInfo(null); }} className='flex items-center gap-3 border p-2 px-3 cursor-pointer'>
+                            <div onClick={() => { setMethod('cod'); }} className='flex items-center gap-3 border p-2 px-3 cursor-pointer'>
                                 <p className={`min-w-3.5 h-3.5 border rounded-full ${method === 'cod' ? 'bg-green-400' : ''}`}></p>
                                 <p className='text-gray-500 text-sm font-medium mx-4'>CASH ON DELIVERY</p>
                             </div>

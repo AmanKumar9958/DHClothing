@@ -56,6 +56,7 @@ const computeSubtotalWithDeals = async (items) => {
     let total = 0
     let oversizeCount = 0, oversizeBase = 0
     let regularCount = 0, regularBase = 0
+    let hoodieCount = 0, hoodieBase = 0
 
     for (const it of items) {
         try {
@@ -86,6 +87,9 @@ const computeSubtotalWithDeals = async (items) => {
             } else if (sc === 'regular fit') {
                 regularCount += qty
                 regularBase += price * qty
+            } else if (sc === 'hoodie') {
+                hoodieCount += qty
+                hoodieBase += price * qty
             } else {
                 total += price * qty
             }
@@ -106,9 +110,16 @@ const computeSubtotalWithDeals = async (items) => {
         if (n > 0) t += n * 299
         return t
     }
+    const priceHoodie = (n) => {
+        let t = 0
+        while (n >= 2) { t += 999; n -= 2 }
+        if (n === 1) t += 599
+        return t
+    }
 
     total += Math.min(oversizeBase, priceOversize(oversizeCount))
     total += Math.min(regularBase, priceRegular(regularCount))
+    total += Math.min(hoodieBase, priceHoodie(hoodieCount))
 
     return total
 }
@@ -128,8 +139,20 @@ const placeOrder = async (req,res) => {
             if (!c || !c.active || (c.expiresAt && Date.now() > c.expiresAt)) {
                 return res.json({ success:false, message: 'Invalid or inactive coupon' })
             }
+            
+            // Check min subtotal
+            if (c.minSubtotal && finalAmount < c.minSubtotal) {
+                return res.json({ success:false, message: `Minimum subtotal of ${c.minSubtotal} required` })
+            }
+
             if (c.type === 'percent') discountAmount = Math.round((finalAmount * c.value)/100)
             else discountAmount = Number(c.value)
+
+            // Check max discount
+            if (c.maxDiscount && c.maxDiscount > 0 && discountAmount > c.maxDiscount) {
+                discountAmount = c.maxDiscount
+            }
+
             if (discountAmount > finalAmount) discountAmount = finalAmount
             finalAmount = Math.max(0, finalAmount - discountAmount)
         }
@@ -175,8 +198,20 @@ const placeOrderStripe = async (req,res) => {
             if (!c || !c.active || (c.expiresAt && Date.now() > c.expiresAt)) {
                 return res.json({ success:false, message: 'Invalid or inactive coupon' })
             }
+            
+            // Check min subtotal
+            if (c.minSubtotal && finalAmount < c.minSubtotal) {
+                return res.json({ success:false, message: `Minimum subtotal of ${c.minSubtotal} required` })
+            }
+
             if (c.type === 'percent') discountAmount = Math.round((finalAmount * c.value)/100)
             else discountAmount = Number(c.value)
+
+            // Check max discount
+            if (c.maxDiscount && c.maxDiscount > 0 && discountAmount > c.maxDiscount) {
+                discountAmount = c.maxDiscount
+            }
+
             if (discountAmount > finalAmount) discountAmount = finalAmount
             finalAmount = Math.max(0, finalAmount - discountAmount)
         }
@@ -257,8 +292,20 @@ const placeOrderRazorpay = async (req,res) => {
             if (!c || !c.active || (c.expiresAt && Date.now() > c.expiresAt)) {
                 return res.json({ success:false, message: 'Invalid or inactive coupon' })
             }
+            
+            // Check min subtotal
+            if (c.minSubtotal && finalAmount < c.minSubtotal) {
+                return res.json({ success:false, message: `Minimum subtotal of ${c.minSubtotal} required` })
+            }
+
             if (c.type === 'percent') discountAmount = Math.round((finalAmount * c.value)/100)
             else discountAmount = Number(c.value)
+
+            // Check max discount
+            if (c.maxDiscount && c.maxDiscount > 0 && discountAmount > c.maxDiscount) {
+                discountAmount = c.maxDiscount
+            }
+
             if (discountAmount > finalAmount) discountAmount = finalAmount
             finalAmount = Math.max(0, finalAmount - discountAmount)
         }

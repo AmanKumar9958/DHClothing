@@ -63,11 +63,11 @@ const Navbar = () => {
                 <img onClick={()=> token ? null : navigate('/login') } className='w-5 cursor-pointer' src={assets.profile_icon} alt="" />
                 {/* Dropdown Menu */}
                 {token && 
-                <div className='group-hover:block hidden absolute dropdown-menu right-0 pt-4'>
-                    <div className='flex flex-col gap-2 w-36 py-3 px-5  bg-slate-100 text-gray-500 rounded'>
+                <div className='group-hover:block hidden absolute dropdown-menu right-0 pt-4 z-50'>
+                    <div className='flex flex-col gap-2 w-36 py-3 px-1.5  bg-slate-100 text-gray-500 rounded'>
                         <p onClick={()=>navigate('/profile')} className='cursor-pointer hover:text-black'>Profile</p>
                         <p onClick={()=>navigate('/orders')} className='cursor-pointer hover:text-black'>Orders</p>
-                        <p onClick={logout} className='cursor-pointer hover:text-black'>Logout</p>
+                        <p onClick={logout} className='cursor-pointer hover:text-white hover:bg-red-500 rounded-md px-0.5'>Logout</p>
                     </div>
                 </div>}
             </div> 
@@ -79,7 +79,7 @@ const Navbar = () => {
       </div>
 
         {/* Sidebar menu for small screens */}
-        <div className={`absolute top-0 right-0 bottom-0 overflow-hidden bg-white transition-all ${visible ? 'w-full' : 'w-0'}`}>
+        <div className={`absolute top-0 right-0 bottom-0 overflow-hidden bg-white transition-all ${visible ? 'w-full' : 'w-0'} z-50`}>
                 <div className='flex flex-col text-gray-600'>
                     <div onClick={()=>setVisible(false)} className='flex items-center gap-4 p-3 cursor-pointer'>
                         <img className='h-4 rotate-180' src={assets.dropdown_icon} alt="" />
