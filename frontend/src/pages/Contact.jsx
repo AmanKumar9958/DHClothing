@@ -27,7 +27,7 @@ const Contact = () => {
             <p className='font-semibold text-xl text-gray-600'>Our Store</p>
             <p className=' text-gray-500'>WZ-16 E, Gali No-1, Santgarh,<br />New Delhi-110018</p>
             <p className='font-semibold text-xl text-gray-600'>Contact Us at</p>
-            <p className=' text-gray-500'>+91 9717944746 <br /> Email: dhclothing2025@gmail.com</p>
+            <p className=' text-gray-500'>+91 9315631808 <br /> Email: dhclothing2025@gmail.com</p>
           </div>
         </div>
       </FadeIn>
