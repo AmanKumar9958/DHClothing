@@ -11,8 +11,7 @@ const LatestCollection = () => {
     const [latestProducts,setLatestProducts] = useState([]);
 
   useEffect(()=>{
-    const nonExclusive = (products || []).filter(p => !p.exclusive);
-    setLatestProducts(nonExclusive.slice(0,5));
+    setLatestProducts(products.slice(0,5));
   },[products])
 
   return (

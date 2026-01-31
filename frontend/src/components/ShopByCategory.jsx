@@ -6,12 +6,33 @@ import { Link } from 'react-router-dom'
 const ShopByCategory = () => {
   const { products } = useContext(ShopContext);
 
-  const categories = [
-    { name: 'Hoodie', value: 'Hoodie', image: products.length > 0 ? products[0].image[0] : '' }, 
-    { name: 'Regular Fit', value: 'Regular fit', image: products.length > 1 ? products[1].image[0] : '' }, 
-    { name: 'Winter Wear', value: 'Winterwear', image: products.length > 2 ? products[2].image[0] : '' }, 
-    { name: 'Oversize', value: 'Oversize', image: products.length > 3 ? products[3].image[0] : '' }, 
-  ]
+  if (!products || products.length === 0) {
+    return null;
+  }
+
+  const definedCategories = [
+    { name: 'Hoodie', value: 'Hoodie' }, 
+    { name: 'Regular Fit', value: 'Regular fit' }, 
+    { name: 'Winter Wear', value: 'Winterwear' }, 
+    { name: 'Oversize', value: 'Oversize' }, 
+  ];
+
+  const categories = definedCategories.reduce((acc, cat) => {
+    // Find a product that matches this category
+    const matchingProduct = products.find(p => p.subCategory === cat.value);
+    
+    if (matchingProduct) {
+      acc.push({
+        ...cat,
+        image: matchingProduct.image && matchingProduct.image.length > 0 ? matchingProduct.image[0] : ''
+      });
+    }
+    return acc;
+  }, []);
+
+  if (categories.length === 0) {
+      return null;
+  }
 
   return (
     <div className='my-10'>

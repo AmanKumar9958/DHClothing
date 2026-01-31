@@ -131,7 +131,7 @@ const removeProduct = async (req, res) => {
 // function for single product info
 const singleProduct = async (req, res) => {
     try {
-        
+
         const { productId } = req.body
         const product = await productModel.findById(productId)
         res.json({success:true,product})
@@ -142,4 +142,27 @@ const singleProduct = async (req, res) => {
     }
 }
 
-export { listProducts, addProduct, removeProduct, singleProduct }
+// function for updating product
+const updateProduct = async (req, res) => {
+    try {
+        const { id, name, description, price, category, subCategory, sizes, bestseller, exclusive } = req.body;
+
+        const updateData = {};
+        if (name) updateData.name = name;
+        if (description) updateData.description = description;
+        if (price) updateData.price = Number(price);
+        if (category) updateData.category = category;
+        if (subCategory) updateData.subCategory = subCategory;
+        if (sizes) updateData.sizes = JSON.parse(sizes);
+        if (bestseller !== undefined) updateData.bestseller = bestseller === "true" || bestseller === true;
+        if (exclusive !== undefined) updateData.exclusive = exclusive === "true" || exclusive === true;
+
+        await productModel.findByIdAndUpdate(id, updateData);
+        res.json({ success: true, message: "Product Updated" });
+    } catch (error) {
+        console.log(error);
+        res.json({ success: false, message: error.message });
+    }
+}
+
+export { listProducts, addProduct, removeProduct, singleProduct, updateProduct }

@@ -48,9 +48,6 @@ const Collection = () => {
 
     let productsCopy = products.slice();
 
-    // Always exclude exclusive items from general collection listing
-    productsCopy = productsCopy.filter(item => !item.exclusive);
-
     if (showSearch && search) {
       productsCopy = productsCopy.filter(item => item.name.toLowerCase().includes(search.toLowerCase()))
     }
