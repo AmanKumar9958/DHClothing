@@ -6,8 +6,26 @@ import { motion, AnimatePresence } from 'framer-motion';
 const SearchBar = () => {
 
     const { search, setSearch, showSearch, setShowSearch } = useContext(ShopContext);
-    const [visible, setVisible] = useState(false)
+    const [visible, setVisible] = useState(false);
+    const [localSearch, setLocalSearch] = useState(search);
     const location = useLocation();
+
+    // Debounce logic
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (search !== localSearch) {
+                setSearch(localSearch);
+            }
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [localSearch]);
+
+    // Sync external search changes (e.g., clearing search)
+    useEffect(() => {
+        if (search !== localSearch) {
+            setLocalSearch(search);
+        }
+    }, [search]);
 
     useEffect(() => {
         if (location.pathname.includes('collection')) {
@@ -22,11 +40,11 @@ const SearchBar = () => {
       <AnimatePresence>
         {showSearch && visible && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-            className='bg-white border-b border-neutral-100 py-4'
+            className='fixed top-[70px] left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-b border-neutral-100 py-4 shadow-sm'
           >
             <div className='max-w-xl mx-auto px-4'>
               <div className='flex items-center gap-3 bg-neutral-50 border border-neutral-200 rounded-full px-5 py-3 focus-within:border-brand-black focus-within:bg-white transition-all duration-300'>
@@ -35,9 +53,9 @@ const SearchBar = () => {
                   <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                 </svg>
                 <input 
-                  value={search} 
-                  onChange={(e) => setSearch(e.target.value)} 
-                  className='flex-1 outline-none bg-transparent text-body-sm text-brand-black placeholder:text-neutral-400' 
+                  value={localSearch} 
+                  onChange={(e) => setLocalSearch(e.target.value)} 
+                  className='flex-1 outline-none border-none focus:ring-0 bg-transparent text-body-sm text-brand-black placeholder:text-neutral-400' 
                   type="text" 
                   placeholder='Search products...'
                   autoFocus

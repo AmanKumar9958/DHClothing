@@ -86,9 +86,9 @@ const Collection = () => {
   return (
     <div className='min-h-screen bg-brand-cream'>
         {/* Header Banner */}
-        <div className='bg-brand-black py-16 px-4 text-center'>
-            <h1 className='font-display text-white text-4xl md:text-5xl mb-4'>The Collection</h1>
-            <p className='text-neutral-400 text-body-sm md:text-base max-w-2xl mx-auto'>
+        <div className='pt-24 pb-8 px-4 text-center'>
+            <h1 className='font-display text-brand-black text-4xl md:text-5xl mb-4'>The Collection</h1>
+            <p className='text-neutral-600 text-body-sm md:text-base max-w-2xl mx-auto'>
                 Curated styles for the modern wardrobe. Filter by category, fit, or style to find your perfect match.
             </p>
         </div>
