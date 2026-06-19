@@ -15,15 +15,15 @@ const Exclusive = () => {
   if (top.length === 0) return null
 
   return (
-    <section className='py-24 bg-brand-black text-white relative overflow-hidden'>
+    <section className='py-24 bg-brand-cream relative overflow-hidden'>
       {/* Background decoration */}
       <div className="absolute -top-[20%] -right-[10%] w-[50%] h-[50%] rounded-full bg-brand-gold/10 blur-[100px]"></div>
       <div className="absolute -bottom-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-brand-gold/10 blur-[100px]"></div>
 
       <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10'>
         <div className='flex flex-col items-center mb-16'>
-          <Title text1='EXCLUSIVE' text2='PICKS' centered light />
-          <p className='text-neutral-400 text-center max-w-2xl mt-4'>
+          <Title text1='EXCLUSIVE' text2='PICKS' centered />
+          <p className='text-neutral-600 text-lg sm:text-xl text-center max-w-2xl mt-4 font-medium'>
             Handpicked premium items available only to our exclusive members.
           </p>
         </div>
@@ -32,11 +32,7 @@ const Exclusive = () => {
           <div className='grid grid-cols-2 md:grid-cols-4 gap-6'>
             {top.map((item, idx) => (
               <FadeInItem key={idx}>
-                {/* ProductItem itself handles dark/light context decently, 
-                    but we wrap it in a div that ensures it stands out */}
-                <div className="bg-white rounded-xl overflow-hidden p-2 pb-0 h-full">
-                    <ProductItem id={item._id} image={item.image} name={item.name} price={item.price} />
-                </div>
+                <ProductItem id={item._id} image={item.image} name={item.name} price={item.price} />
               </FadeInItem>
             ))}
           </div>
