@@ -29,6 +29,28 @@ const testimonials = [
   }
 ];
 
+const TestimonialCard = ({ testimonial }) => (
+  <div className="w-[300px] sm:w-[350px] md:w-[400px] flex-shrink-0 bg-neutral-50 rounded-2xl p-8 border border-neutral-100 hover:shadow-soft-lg transition-shadow duration-300 flex flex-col">
+    <div className="flex gap-1 mb-6 text-brand-gold">
+      {[...Array(testimonial.rating)].map((_, i) => (
+        <svg key={i} xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+      ))}
+    </div>
+    <p className="text-brand-black text-lg font-display italic mb-8 leading-relaxed flex-grow">
+      "{testimonial.content}"
+    </p>
+    <div className="flex items-center gap-4 mt-auto">
+      <div className="w-12 h-12 rounded-full bg-brand-charcoal text-white flex items-center justify-center font-display font-medium text-lg">
+        {testimonial.name.charAt(0)}
+      </div>
+      <div>
+        <p className="font-semibold text-brand-black">{testimonial.name}</p>
+        <p className="text-sm text-neutral-500">{testimonial.role}</p>
+      </div>
+    </div>
+  </div>
+);
+
 const TestimonialsSection = () => {
   return (
     <section className="py-24 bg-white overflow-hidden">
@@ -41,30 +63,42 @@ const TestimonialsSection = () => {
         </div>
 
         <FadeIn stagger={0.15}>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, idx) => (
-              <FadeInItem key={idx}>
-                <div className="bg-neutral-50 rounded-2xl p-8 h-full border border-neutral-100 hover:shadow-soft-lg transition-shadow duration-300">
-                  <div className="flex gap-1 mb-6 text-brand-gold">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <svg key={i} xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
-                    ))}
-                  </div>
-                  <p className="text-brand-black text-lg font-display italic mb-8 leading-relaxed">
-                    "{testimonial.content}"
-                  </p>
-                  <div className="flex items-center gap-4 mt-auto">
-                    <div className="w-12 h-12 rounded-full bg-brand-charcoal text-white flex items-center justify-center font-display font-medium text-lg">
-                      {testimonial.name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-brand-black">{testimonial.name}</p>
-                      <p className="text-sm text-neutral-500">{testimonial.role}</p>
-                    </div>
-                  </div>
+          <div className="w-full overflow-hidden relative marquee-container py-4">
+            <style>
+              {`
+                @keyframes marquee {
+                  0% { transform: translateX(0%); }
+                  100% { transform: translateX(-100%); }
+                }
+                .animate-marquee {
+                  display: flex;
+                  min-width: 100%;
+                  animation: marquee 35s linear infinite;
+                }
+                .marquee-container:hover .animate-marquee {
+                  animation-play-state: paused;
+                }
+              `}
+            </style>
+            
+            {/* Gradient masks for edge fading */}
+            <div className="absolute inset-y-0 left-0 w-16 sm:w-32 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none"></div>
+            <div className="absolute inset-y-0 right-0 w-16 sm:w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none"></div>
+
+            <div className="flex">
+                {/* First Set */}
+                <div className="animate-marquee gap-6 sm:gap-8 pr-6 sm:pr-8">
+                  {testimonials.map((testimonial, idx) => (
+                      <TestimonialCard key={`set1-${idx}`} testimonial={testimonial} />
+                  ))}
                 </div>
-              </FadeInItem>
-            ))}
+                {/* Second Set (Duplicate for seamless loop) */}
+                <div className="animate-marquee gap-6 sm:gap-8 pr-6 sm:pr-8" aria-hidden="true">
+                  {testimonials.map((testimonial, idx) => (
+                      <TestimonialCard key={`set2-${idx}`} testimonial={testimonial} />
+                  ))}
+                </div>
+            </div>
           </div>
         </FadeIn>
       </div>
