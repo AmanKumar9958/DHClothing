@@ -11,7 +11,7 @@ const About = () => {
         <div className='bg-brand-black text-white py-20 px-4 text-center'>
             <FadeIn>
                 <div className='max-w-3xl mx-auto'>
-                    <h1 className='font-display text-4xl sm:text-5xl lg:text-6xl mb-6'>Our Story</h1>
+                    <Title text1='OUR' text2='STORY' centered light />
                     <p className='text-neutral-400 text-lg sm:text-xl font-light leading-relaxed'>
                         Redefining modern luxury through accessible, timeless pieces that elevate your everyday wardrobe.
                     </p>

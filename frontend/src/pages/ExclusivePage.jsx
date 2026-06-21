@@ -20,7 +20,7 @@ const ExclusivePage = () => {
           <div className='w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-8 border border-white/10 shadow-lg shadow-black/50'>
               <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 text-brand-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           </div>
-          <h1 className='font-display text-4xl sm:text-5xl font-semibold mb-4'>Members Only</h1>
+          <Title text1='MEMBERS' text2='ONLY' centered light />
           <p className='text-neutral-400 text-lg mb-8'>
             Our exclusive drops are reserved for registered members. Please log in or create an account to view and purchase these rare finds.
           </p>
@@ -42,12 +42,7 @@ const ExclusivePage = () => {
         <div className='relative z-10 pt-24 pb-16 px-4 text-center border-b border-white/10'>
             <FadeIn>
                 <div className='max-w-3xl mx-auto'>
-                    <div className='flex items-center justify-center gap-4 mb-6'>
-                        <span className='w-12 h-px bg-brand-gold'></span>
-                        <span className='text-brand-gold font-medium tracking-[0.2em] text-xs uppercase'>Members Only</span>
-                        <span className='w-12 h-px bg-brand-gold'></span>
-                    </div>
-                    <h1 className='font-display text-4xl sm:text-5xl lg:text-6xl mb-6'>Exclusive Drops</h1>
+                    <Title text1='EXCLUSIVE' text2='DROPS' centered light />
                     <p className='text-neutral-400 text-lg sm:text-xl font-light leading-relaxed'>
                         Handpicked premium items available in limited quantities. Elevate your collection with these rare finds.
                     </p>
