@@ -8,11 +8,11 @@ const Contact = () => {
   return (
     <div className='min-h-screen bg-brand-cream pb-24'>
       {/* Hero Section */}
-      <div className='bg-brand-black text-white py-20 px-4 text-center'>
+      <div className='pt-20 pb-6 px-4 flex flex-col items-center text-center'>
           <FadeIn>
               <div className='max-w-3xl mx-auto'>
-                  <Title text1='CONTACT' text2='US' centered light />
-                  <p className='text-neutral-400 text-lg sm:text-xl font-light leading-relaxed'>
+                  <Title text1='CONTACT' text2='US' centered />
+                  <p className='text-neutral-600 text-body-sm md:text-base max-w-2xl mx-auto'>
                       We're here to help. Reach out to us for any inquiries, support, or feedback.
                   </p>
               </div>
