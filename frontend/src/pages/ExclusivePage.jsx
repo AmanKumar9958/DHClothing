@@ -12,16 +12,16 @@ const ExclusivePage = () => {
 
   if (!token) {
     return (
-      <div className='min-h-screen bg-brand-black text-white flex flex-col items-center justify-center text-center p-4 relative overflow-hidden'>
+      <div className='min-h-screen bg-brand-cream text-brand-black flex flex-col items-center justify-center text-center p-4 relative overflow-hidden'>
         <div className="absolute top-0 right-0 w-[50%] h-[50%] rounded-full bg-brand-gold/10 blur-[120px] pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-[50%] h-[50%] rounded-full bg-brand-gold/10 blur-[120px] pointer-events-none"></div>
         
         <FadeIn className="relative z-10 max-w-lg">
-          <div className='w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-8 border border-white/10 shadow-lg shadow-black/50'>
+          <div className='w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto mb-8 shadow-soft'>
               <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 text-brand-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
           </div>
-          <Title text1='MEMBERS' text2='ONLY' centered light />
-          <p className='text-neutral-400 text-lg mb-8'>
+          <Title text1='MEMBERS' text2='ONLY' centered />
+          <p className='text-neutral-600 text-lg mb-8'>
             Our exclusive drops are reserved for registered members. Please log in or create an account to view and purchase these rare finds.
           </p>
           <Link to="/login" className="btn-gold inline-block">
@@ -33,17 +33,17 @@ const ExclusivePage = () => {
   }
 
   return (
-    <div className='min-h-screen bg-brand-black text-white relative overflow-hidden pb-24'>
+    <div className='min-h-screen bg-brand-cream text-brand-black relative overflow-hidden pb-24'>
         {/* Background ambient light */}
         <div className="absolute top-0 right-0 w-[50%] h-[50%] rounded-full bg-brand-gold/10 blur-[120px] pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-[50%] h-[50%] rounded-full bg-brand-gold/10 blur-[120px] pointer-events-none"></div>
 
         {/* Hero Section */}
-        <div className='relative z-10 pt-24 pb-16 px-4 text-center border-b border-white/10'>
+        <div className='relative z-10 pt-20 pb-6 px-4 flex flex-col items-center text-center'>
             <FadeIn>
                 <div className='max-w-3xl mx-auto'>
-                    <Title text1='EXCLUSIVE' text2='DROPS' centered light />
-                    <p className='text-neutral-400 text-lg sm:text-xl font-light leading-relaxed'>
+                    <Title text1='EXCLUSIVE' text2='DROPS' centered />
+                    <p className='text-neutral-600 text-body-sm md:text-base max-w-2xl mx-auto'>
                         Handpicked premium items available in limited quantities. Elevate your collection with these rare finds.
                     </p>
                 </div>
