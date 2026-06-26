@@ -70,7 +70,9 @@ const Orders = () => {
                 <div className='text-3xl sm:text-4xl mb-8 font-medium'>
                     <Title text1={'MY'} text2={'ORDERS'}/>
                 </div>
+            </FadeIn>
 
+            <FadeIn key={loading ? 'loading' : (orderData.length === 0 ? 'empty' : 'full')} stagger={0.05}>
                 {loading ? (
                     <div className='bg-white rounded-3xl p-16 shadow-soft border border-neutral-100 flex justify-center'>
                         <LoadingSpinner />
