@@ -3,6 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { ShopContext } from '../context/ShopContext';
 import FadeIn, { FadeInItem } from '../components/FadeIn';
+import Title from '../components/Title';
 
 const formatDate = (value) => {
   if (!value) return '—';
@@ -60,12 +61,14 @@ const Profile = () => {
   return (
     <div className='min-h-screen bg-brand-cream pb-24'>
         {/* Header */}
-        <div className='bg-brand-black text-white py-16 px-4 text-center'>
+        <div className='pt-20 pb-6 px-4 flex flex-col items-center text-center'>
             <FadeIn>
-                <h1 className='font-display text-4xl sm:text-5xl mb-4'>My Profile</h1>
-                <p className='text-neutral-400 text-lg font-light max-w-2xl mx-auto'>
-                    Manage your account details and view your shopping activity.
-                </p>
+                <div className='max-w-3xl mx-auto flex flex-col items-center'>
+                    <Title text1='MY' text2='PROFILE' centered />
+                    <p className='text-neutral-600 text-body-sm md:text-base max-w-2xl mx-auto'>
+                        Manage your account details and view your shopping activity.
+                    </p>
+                </div>
             </FadeIn>
         </div>
 
