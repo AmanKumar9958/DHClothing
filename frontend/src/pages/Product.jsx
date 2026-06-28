@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext';
 import { assets } from '../assets/assets';
 import RelatedProducts from '../components/RelatedProducts';
@@ -8,41 +8,35 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import FadeIn from '../components/FadeIn';
 
 const Product = () => {
-
     const { productId } = useParams();
     const { products, currency, addToCart } = useContext(ShopContext);
     const [productData, setProductData] = useState(false);
-    const [image, setImage] = useState(''); // State for the large image URL
+    const [image, setImage] = useState('');
     const [size, setSize] = useState('');
     const [selectedVariantIndex, setSelectedVariantIndex] = useState(null);
-    const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
-    // Effect to find the product and set initial state when productId or products change
     useEffect(() => {
         const foundProduct = products.find((item) => item._id === productId);
         if (foundProduct) {
             setProductData(foundProduct);
-            // Check for variants and set initial variant/image
             if (foundProduct.variants && foundProduct.variants.length > 0) {
-                setSelectedVariantIndex(0); // Select the first variant by default
+                setSelectedVariantIndex(0);
                 const firstVariant = foundProduct.variants[0];
                 if (firstVariant.images && firstVariant.images.length > 0) {
-                    setImage(firstVariant.images[0]); // Set the first image of the first variant
+                    setImage(firstVariant.images[0]);
                 } else {
-                    setImage(foundProduct.image && foundProduct.image.length > 0 ? foundProduct.image[0] : ''); // Fallback to main image
+                    setImage(foundProduct.image && foundProduct.image.length > 0 ? foundProduct.image[0] : '');
                 }
             } else {
-                // Fallback if no variants (using your old logic)
                 setSelectedVariantIndex(null);
-                setImage(foundProduct.image && foundProduct.image.length > 0 ? foundProduct.image[0] : ''); // Use old image field if exists
+                setImage(foundProduct.image && foundProduct.image.length > 0 ? foundProduct.image[0] : '');
             }
-            setSize(''); // Reset size selection when product changes
+            setSize('');
         } else {
-            setProductData(false); // Product not found
+            setProductData(false);
         }
     }, [productId, products]);
 
-    // Function to get the gallery images for the currently selected variant
     const getCurrentGallery = () => {
         if (selectedVariantIndex !== null && productData.variants && productData.variants[selectedVariantIndex]) {
             const variant = productData.variants[selectedVariantIndex];
@@ -50,7 +44,6 @@ const Product = () => {
                 return variant.images;
             }
         }
-        // Fallback to old image field or empty array if no variants/images
         return productData.image || [];
     };
 
@@ -58,149 +51,176 @@ const Product = () => {
 
     const handleAddToCart = () => {
         if (!size) {
-            // Consider using toast notifications here instead of alert
+            // Replaced alert with custom styled error in UI or just a simple alert for now
+            // since we don't have toast imported here. Oh wait, we can just use the button state.
             alert("Please select a size.");
             return;
         }
 
-        // Determine the variant identifier to pass to addToCart.
-        // The backend/frontend variant lookup supports either an explicit variant `id` field
-        // or a numeric index into the `variants` array. Prefer explicit id when present,
-        // otherwise pass the numeric index.
         let variantId = null;
         if (selectedVariantIndex !== null && productData.variants && productData.variants[selectedVariantIndex]) {
             const v = productData.variants[selectedVariantIndex];
             variantId = (v.id !== undefined && v.id !== null) ? v.id : selectedVariantIndex;
         }
-
         addToCart(productData._id, size, variantId);
     };
 
-
-    // Render loading or not found state if productData isn't ready
     if (!productData) {
-        return <div className='border-t-2 pt-10 text-center'><LoadingSpinner /></div>;
+        return <div className='min-h-[60vh] flex items-center justify-center bg-brand-cream'><LoadingSpinner /></div>;
     }
 
     return (
-        <FadeIn>
-            <div className='border-t-2 pt-10 transition-opacity ease-in duration-500 opacity-100'>
-                {/*----------- Product Data-------------- */}
-                <div className='flex gap-6 sm:gap-12 flex-col sm:flex-row max-w-6xl mx-auto px-4'>
+        <div className='bg-brand-cream min-h-screen pb-24'>
+            {/* Breadcrumb */}
+            <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6'>
+                <div className='flex items-center gap-2 text-xs font-medium text-neutral-500 uppercase tracking-wider'>
+                    <Link to='/' className='hover:text-brand-black transition-colors'>Home</Link>
+                    <span>/</span>
+                    <Link to='/collection' className='hover:text-brand-black transition-colors'>Collection</Link>
+                    <span>/</span>
+                    <span className='text-brand-black'>{productData.category}</span>
+                </div>
+            </div>
 
-                    {/*---------- Product Images------------- */}
-                    <div className='flex-1 flex flex-col-reverse gap-3 sm:flex-row'>
-                        {/* --- Corrected Thumbnail Container --- */}
-                        <div className='flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-normal sm:w-[18.7%] w-full gap-3'>
-                            {gallery.map((item, index) => (
-                                <LazyImage
-                                    onClick={() => setImage(item)}
-                                    src={item}
-                                    key={index}
-                                    className={`w-full h-full cursor-pointer object-cover`}
-                                    wrapperClassName={`w-[24%] sm:w-full flex-shrink-0 rounded-sm border ${image === item ? 'border-orange-500' : ''}`}
+            <FadeIn>
+                <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
+                    <div className='bg-white rounded-3xl p-6 sm:p-10 shadow-soft border border-neutral-100 flex flex-col lg:flex-row gap-12 lg:gap-16'>
+                        
+                        {/* Image Gallery */}
+                        <div className='lg:w-1/2 flex flex-col-reverse sm:flex-row gap-4'>
+                            {/* Thumbnails */}
+                            <div className='flex sm:flex-col gap-4 overflow-x-auto sm:overflow-y-auto sm:w-24 flex-shrink-0 no-scrollbar pb-2 sm:pb-0'>
+                                {gallery.map((item, index) => (
+                                    <button 
+                                        key={index}
+                                        onClick={() => setImage(item)}
+                                        className={`relative w-20 sm:w-full aspect-[3/4] rounded-xl overflow-hidden flex-shrink-0 border-2 transition-all ${image === item ? 'border-brand-black shadow-md' : 'border-transparent hover:border-neutral-200'}`}
+                                    >
+                                        <LazyImage
+                                            src={item}
+                                            className='w-full h-full object-cover'
+                                            skeletonClass="w-full h-full"
+                                            alt={`Thumbnail ${index + 1}`}
+                                        />
+                                    </button>
+                                ))}
+                            </div>
+                            
+                            {/* Main Image */}
+                            <div className='w-full rounded-2xl overflow-hidden bg-neutral-100 img-zoom relative aspect-[3/4] sm:aspect-auto'>
+                                <LazyImage 
+                                    className='w-full h-full object-cover absolute inset-0' 
+                                    src={image || (gallery.length > 0 ? gallery[0] : assets.placeholder)} 
+                                    alt={productData.name} 
                                     skeletonClass="w-full h-full"
-                                    alt={`Thumbnail ${index + 1}`}
                                 />
-                            ))}
+                            </div>
                         </div>
-                        {/* --- Main Image --- */}
-                        <div className='w-full sm:w-[80%]'>
-                            <LazyImage 
-                                className='w-full h-auto object-cover rounded' 
-                                src={image || (gallery.length > 0 ? gallery[0] : assets.placeholder)} 
-                                alt={productData.name} 
-                                skeletonClass="w-full h-96"
-                            />
-                        </div>
-                    </div>
 
-                    {/* -------- Product Info ---------- */}
-                    <div className='flex-1'>
-                        <h1 className='font-medium text-2xl mt-2'>{productData.name}</h1>
-                        {/* Star Rating Placeholder */}
-                        <div className=' flex items-center gap-1 mt-2 text-gray-400'>
-                            {/* Replace with actual rating logic if available */}
-                            {/* {[...Array(5)].map((_, i) => <img key={i} src={i < 4 ? assets.star_icon : assets.star_dull_icon} alt="" className="w-3.5" />)} */}
-                            {/* <p className='pl-2 text-sm'>(122)</p> Placeholder count */}
-                        </div>
-                        <p className='mt-5 text-3xl font-semibold'>{currency}{productData.price.toFixed(2)}</p>
-                        <div className='mt-5 text-gray-600 text-sm md:w-4/5'>
-                            <p>
-                                {isDescriptionExpanded 
-                                    ? productData.description 
-                                    : `${productData.description.slice(0, 250)}...`}
+                        {/* Product Details */}
+                        <div className='lg:w-1/2 flex flex-col'>
+                            <div className='mb-2 text-brand-gold text-xs font-bold tracking-widest uppercase'>
+                                {productData.subCategory}
+                            </div>
+                            <h1 className='font-display text-3xl sm:text-4xl lg:text-5xl font-medium leading-tight mb-4 text-brand-black'>
+                                {productData.name}
+                            </h1>
+                            
+                            <div className='flex items-center gap-4 mb-8'>
+                                <p className='text-3xl font-semibold text-brand-black'>{currency}{productData.price.toFixed(2)}</p>
+                                <span className='px-3 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-full uppercase tracking-wider'>In Stock</span>
+                            </div>
+
+                            <p className='text-neutral-500 text-body-md leading-relaxed mb-10'>
+                                {productData.description}
                             </p>
-                            {productData.description.length > 250 && (
-                                <button 
-                                    onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                                    className='text-blue-500 hover:underline mt-1'
-                                >
-                                    {isDescriptionExpanded ? 'Read Less' : 'Read More'}
-                                </button>
-                            )}
-                        </div>
 
-                        {/* --- Color Swatches --- */}
-                        {productData.variants && productData.variants.length > 0 && (
-                            <div className='my-8'>
-                                <p className='font-medium mb-2'>Color: <span className='font-normal'>{productData.variants[selectedVariantIndex]?.color}</span></p>
-                                <div className='flex flex-wrap gap-2'>
-                                    {productData.variants.map((v, idx) => (
-                                        <button
-                                            key={idx}
-                                            onClick={() => {
-                                                setSelectedVariantIndex(idx);
-                                                const newGallery = (v.images && v.images.length) ? v.images : productData.image || [];
-                                                setImage(newGallery[0] || ''); // Set first image of new variant
-                                            }}
-                                            className={`w-8 h-8 rounded-full border-2 p-0.5 ${selectedVariantIndex === idx ? 'border-black ring-2 ring-offset-1 ring-black' : 'border-gray-300'}`}
-                                            title={v.color}
+                            <div className='h-px bg-neutral-100 w-full mb-8'></div>
+
+                            {/* Color Swatches */}
+                            {productData.variants && productData.variants.length > 0 && (
+                                <div className='mb-8'>
+                                    <div className='flex items-center justify-between mb-4'>
+                                        <p className='text-sm font-semibold uppercase tracking-wider text-brand-black'>
+                                            Color: <span className='text-neutral-500 ml-2 font-normal capitalize'>{productData.variants[selectedVariantIndex]?.color}</span>
+                                        </p>
+                                    </div>
+                                    <div className='flex flex-wrap gap-3'>
+                                        {productData.variants.map((v, idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={() => {
+                                                    setSelectedVariantIndex(idx);
+                                                    const newGallery = (v.images && v.images.length) ? v.images : productData.image || [];
+                                                    setImage(newGallery[0] || '');
+                                                }}
+                                                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${selectedVariantIndex === idx ? 'ring-2 ring-brand-black ring-offset-2' : 'ring-1 ring-neutral-200 hover:ring-neutral-400'}`}
+                                                title={v.color}
+                                            >
+                                                <span
+                                                    className="w-8 h-8 rounded-full shadow-inner border border-black/5"
+                                                    style={{ backgroundColor: v.colorHex || '#eee' }}
+                                                ></span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Size Selection */}
+                            <div className='mb-10'>
+                                <div className='flex items-center justify-between mb-4'>
+                                    <p className='text-sm font-semibold uppercase tracking-wider text-brand-black'>Select Size</p>
+                                    <button className='text-xs text-neutral-500 underline hover:text-brand-black'>Size Guide</button>
+                                </div>
+                                <div className='grid grid-cols-4 sm:grid-cols-5 gap-3'>
+                                    {productData.sizes && productData.sizes.map((item, index) => (
+                                        <button 
+                                            onClick={() => setSize(item)} 
+                                            className={`py-3 rounded-xl border font-medium transition-all ${item === size ? 'bg-brand-black text-white border-brand-black shadow-md' : 'bg-white text-neutral-700 border-neutral-200 hover:border-brand-black'}`} 
+                                            key={index}
                                         >
-                                            <div
-                                            className="w-full h-full rounded-full border border-gray-200"
-                                            style={{ backgroundColor: v.colorHex || '#eee' }}
-                                            ></div>
+                                            {item}
                                         </button>
                                     ))}
                                 </div>
                             </div>
-                        )}
 
-
-                        {/* --- Size Selection --- */}
-                        <div className='flex flex-col gap-3 my-8'>
-                            <p className='font-medium'>Select Size</p>
-                            <div className='flex flex-wrap gap-2'>
-                                {productData.sizes && productData.sizes.map((item, index) => (
-                                    <button onClick={() => setSize(item)} className={`border py-2 px-4 rounded ${item === size ? 'bg-black text-white border-black' : 'bg-gray-100 hover:bg-gray-200'}`} key={index}>{item}</button>
-                                ))}
+                            {/* Add to Cart */}
+                            <button 
+                                onClick={handleAddToCart} 
+                                className='btn-primary w-full py-4 text-base rounded-xl shadow-soft group relative overflow-hidden'
+                            >
+                                <span className='relative z-10 flex items-center justify-center gap-2'>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                                    Add to Cart
+                                </span>
+                            </button>
+                            
+                            <div className='mt-8 pt-8 border-t border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-sm text-neutral-500'>
+                                <div className='flex items-center gap-2'>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-brand-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                                    <span>Premium Quality</span>
+                                </div>
+                                <div className='flex items-center gap-2'>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-brand-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                                    <span>Fast Delivery</span>
+                                </div>
+                                <div className='flex items-center gap-2'>
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-brand-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                                    <span>7-Day Returns</span>
+                                </div>
                             </div>
-                        </div>
-
-                        <button onClick={handleAddToCart} className='w-full sm:w-auto bg-black text-white px-8 py-3 text-sm font-medium rounded active:bg-gray-700 hover:bg-gray-800 transition-colors'>ADD TO CART</button>
-                        
-                        <hr className='mt-8 sm:w-4/5 border-gray-200' />
-                        <div className='text-xs text-gray-500 mt-5 flex flex-col gap-1'>
-                            <p>✓ 100% Original product.</p>
-                            <p>✓ Cash on delivery is available.</p>
-                            <p>✓ Easy 7-day return and exchange policy.</p>
                         </div>
                     </div>
                 </div>
+            </FadeIn>
 
-                {/* ---------- Description & Review Section Placeholder ------------- */}
-                {/* <div className='mt-20 max-w-6xl mx-auto px-4'> */}
-                    {/* Add Description/Review tabs here if needed */}
-                {/* </div> */}
-
-                {/* --------- Display related products ---------- */}
-                <div className='mt-20 max-w-6xl mx-auto px-4'>
-                    <RelatedProducts category={productData.category} subCategory={productData.subCategory} />
-                </div>
-
+            {/* Related Products */}
+            <div className='mt-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
+                <RelatedProducts category={productData.category} subCategory={productData.subCategory} />
             </div>
-        </FadeIn>
+        </div>
     );
 };
 

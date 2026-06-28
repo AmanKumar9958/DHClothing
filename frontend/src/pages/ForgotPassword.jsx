@@ -63,7 +63,6 @@ const ForgotPassword = () => {
     }
   }
 
-  // OTP countdown and resend cooldown timers
   useEffect(() => {
     let interval = null
     if (step === 2 && (otpSecondsLeft > 0 || resendCooldown > 0)) {
@@ -78,49 +77,79 @@ const ForgotPassword = () => {
   }, [step, otpSecondsLeft, resendCooldown])
 
   return (
-    <FadeIn>
-      <div className='flex flex-col items-center w-[90%] sm:max-w-96 m-auto mt-14 gap-4 text-gray-800'>
-        <div className='inline-flex items-center gap-2 mb-2 mt-10'>
-          <p className='prata-regular text-3xl'>Forgot Password</p>
-          <hr className='border-none h-[1.5px] w-8 bg-gray-800' />
-        </div>
+    <div className='min-h-screen bg-brand-cream flex items-center justify-center py-20 px-4'>
+        <FadeIn className='w-full max-w-md'>
+            <div className='bg-white p-8 sm:p-12 rounded-3xl shadow-soft border border-neutral-100'>
+                <div className='text-center mb-10'>
+                    <h1 className='font-display text-3xl font-semibold text-brand-black mb-2'>
+                        {step === 1 ? 'Reset Password' : step === 2 ? 'Verify Email' : 'New Password'}
+                    </h1>
+                    <p className='text-neutral-500 text-sm'>
+                        {step === 1 ? 'Enter your email to receive a reset code.' : step === 2 ? 'We sent a verification code to your email.' : 'Please enter a new, secure password.'}
+                    </p>
+                </div>
 
-        {step === 1 && (
-          <>
-            <p className='text-sm text-gray-600'>Enter the email associated with your account</p>
-            <input value={email} onChange={(e)=>setEmail(e.target.value)} type='email' className='w-full px-3 py-2 border border-gray-800' placeholder='Email' required />
-            <button onClick={sendOtp} className='bg-black text-white font-light px-8 py-2 mt-4'>Send OTP</button>
-          </>
-        )}
+                <div className='flex flex-col gap-5'>
+                    {step === 1 && (
+                        <>
+                            <div className='space-y-1.5'>
+                                <label className='text-sm font-medium text-neutral-700 ml-1'>Email Address</label>
+                                <input value={email} onChange={(e)=>setEmail(e.target.value)} type='email' className='w-full px-4 py-3 border border-neutral-200 rounded-xl bg-neutral-50 focus:bg-white focus-ring transition-colors outline-none' placeholder='name@example.com' required />
+                            </div>
+                            <button onClick={sendOtp} className='btn-primary w-full py-4 mt-2 rounded-xl text-base'>Send Reset Code</button>
+                        </>
+                    )}
 
-        {step === 2 && (
-          <>
-            <p className='text-sm text-gray-600'>Enter the 6-digit code sent to <b>{email}</b></p>
-            <input value={otp} onChange={(e)=>setOtp(e.target.value)} inputMode='numeric' pattern='[0-9]*' maxLength={6} className='w-full px-3 py-2 border border-gray-800 tracking-widest text-center' placeholder='Enter OTP' />
-            <div className='w-full flex justify-between items-center gap-4'>
-              <button onClick={()=>{ setStep(1); setOtp('') }} className='text-sm underline'>Change email</button>
-              <div className='flex items-center gap-3'>
-                <button disabled={resendCooldown>0} onClick={async ()=>{ await sendOtp(); }} className='text-sm underline'>{resendCooldown>0?`Resend in ${resendCooldown}s`:'Resend OTP'}</button>
-                {otpSecondsLeft>0 && <p className='text-sm text-gray-600'>Expires in {String(Math.floor(otpSecondsLeft/60)).padStart(2,'0')}:{String(otpSecondsLeft%60).padStart(2,'0')}</p>}
-              </div>
+                    {step === 2 && (
+                        <>
+                            <div className='space-y-1.5'>
+                                <label className='text-sm font-medium text-neutral-700 ml-1'>Email Address</label>
+                                <input value={email} disabled className='w-full px-4 py-3 border border-neutral-200 rounded-xl bg-neutral-100 text-neutral-500 cursor-not-allowed outline-none' />
+                            </div>
+                            <div className='space-y-1.5'>
+                                <label className='text-sm font-medium text-neutral-700 ml-1'>Verification Code</label>
+                                <input value={otp} onChange={(e)=>setOtp(e.target.value)} inputMode='numeric' pattern='[0-9]*' maxLength={6} className='w-full px-4 py-3 border border-neutral-200 rounded-xl bg-white focus-ring transition-colors outline-none tracking-[0.5em] text-center font-semibold text-lg' placeholder='000000' required />
+                            </div>
+                            
+                            <div className='flex items-center justify-between text-sm mt-2'>
+                                {otpSecondsLeft > 0 ? (
+                                    <p className='text-neutral-500'>Expires in <span className='font-medium text-brand-black'>{String(Math.floor(otpSecondsLeft/60)).padStart(2,'0')}:{String(otpSecondsLeft%60).padStart(2,'0')}</span></p>
+                                ) : (
+                                    <p className='text-red-500'>Code expired</p>
+                                )}
+                                <div className='flex items-center gap-3'>
+                                    <button onClick={()=>{ setStep(1); setOtp('') }} className='text-neutral-500 hover:text-brand-black transition-colors'>Change email</button>
+                                    <button 
+                                        className='text-brand-black font-medium hover:text-brand-gold transition-colors disabled:text-neutral-400 disabled:cursor-not-allowed' 
+                                        disabled={resendCooldown > 0} 
+                                        onClick={async ()=>{ await sendOtp(); }}
+                                    >
+                                        {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend'}
+                                    </button>
+                                </div>
+                            </div>
+                            <button onClick={verifyOtp} className='btn-primary w-full py-4 mt-2 rounded-xl text-base'>Verify Code</button>
+                        </>
+                    )}
+
+                    {step === 3 && (
+                        <>
+                            <div className='space-y-1.5'>
+                                <label className='text-sm font-medium text-neutral-700 ml-1'>New Password</label>
+                                <input value={newPassword} onChange={(e)=>setNewPassword(e.target.value)} type='password' className='w-full px-4 py-3 border border-neutral-200 rounded-xl bg-neutral-50 focus:bg-white focus-ring transition-colors outline-none' placeholder='Enter new password' required />
+                            </div>
+                            
+                            <div className='flex justify-between items-center text-sm font-medium mt-2'>
+                                <button onClick={()=>setStep(2)} className='text-neutral-500 hover:text-brand-black transition-colors'>Back to Code</button>
+                            </div>
+                            
+                            <button onClick={submitNewPassword} className='btn-primary w-full py-4 mt-2 rounded-xl text-base'>Set Password & Login</button>
+                        </>
+                    )}
+                </div>
             </div>
-            <button onClick={verifyOtp} className='bg-black text-white font-light px-8 py-2 mt-4'>Verify OTP</button>
-          </>
-        )}
-
-        {step === 3 && (
-          <>
-            <p className='text-sm text-gray-600'>Set a new password for <b>{email}</b></p>
-            <input value={newPassword} onChange={(e)=>setNewPassword(e.target.value)} type='password' className='w-full px-3 py-2 border border-gray-800' placeholder='New password' />
-            <div className='w-full flex justify-between'>
-              <button onClick={()=>setStep(2)} className='text-sm underline'>Back</button>
-            </div>
-            <button onClick={submitNewPassword} className='bg-black text-white font-light px-8 py-2 mt-4'>Set Password</button>
-          </>
-        )}
-
-      </div>
-    </FadeIn>
+        </FadeIn>
+    </div>
   )
 }
 

@@ -1,4 +1,5 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
 import Home from './pages/Home'
 import Collection from './pages/Collection'
 import About from './pages/About'
@@ -19,28 +20,54 @@ import Verify from './pages/Verify'
 import ExclusivePage from './pages/ExclusivePage'
 import ScrollToTop from './components/ScrollToTop';
 
-const App = () => {
+const PageWrapper = ({ children }) => {
   return (
-    <div className='px-4 sm:px-[5vw] md:px-[7vw] lg:px-[9vw]'>
-      <ToastContainer />
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -15 }}
+      transition={{ duration: 0.4, ease: [0.25, 1, 0.5, 1] }}
+      className="min-h-screen"
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+const App = () => {
+  const location = useLocation();
+
+  return (
+    <div className='flex flex-col min-h-screen'>
+      <ToastContainer position="bottom-right" theme="light" />
+      
+      {/* Navigation Layer */}
       <Navbar />
       <SearchBar />
       <ScrollToTop />
-      <Routes>
-        <Route path='/' element={<Home />} />
-        <Route path='/collection' element={<Collection />} />
-        <Route path='/about' element={<About />} />
-        <Route path='/contact' element={<Contact />} />
-        <Route path='/product/:productId' element={<Product />} />
-        <Route path='/cart' element={<Cart />} />
-        <Route path='/login' element={<Login />} />
-        <Route path='/forgot-password' element={<ForgotPassword />} />
-        <Route path='/profile' element={<Profile />} />
-        <Route path='/place-order' element={<PlaceOrder />} />
-        <Route path='/orders' element={<Orders />} />
-        <Route path='/verify' element={<Verify />} />
-        <Route path='/exclusive' element={<ExclusivePage />} />
-      </Routes>
+      
+      {/* Main Content Layer */}
+      <main className='flex-grow pt-[80px]'>
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path='/' element={<PageWrapper><Home /></PageWrapper>} />
+            <Route path='/collection' element={<PageWrapper><Collection /></PageWrapper>} />
+            <Route path='/about' element={<PageWrapper><About /></PageWrapper>} />
+            <Route path='/contact' element={<PageWrapper><Contact /></PageWrapper>} />
+            <Route path='/product/:productId' element={<PageWrapper><Product /></PageWrapper>} />
+            <Route path='/cart' element={<PageWrapper><Cart /></PageWrapper>} />
+            <Route path='/login' element={<PageWrapper><Login /></PageWrapper>} />
+            <Route path='/forgot-password' element={<PageWrapper><ForgotPassword /></PageWrapper>} />
+            <Route path='/profile' element={<PageWrapper><Profile /></PageWrapper>} />
+            <Route path='/place-order' element={<PageWrapper><PlaceOrder /></PageWrapper>} />
+            <Route path='/orders' element={<PageWrapper><Orders /></PageWrapper>} />
+            <Route path='/verify' element={<PageWrapper><Verify /></PageWrapper>} />
+            <Route path='/exclusive' element={<PageWrapper><ExclusivePage /></PageWrapper>} />
+          </Routes>
+        </AnimatePresence>
+      </main>
+
+      {/* Footer Layer */}
       <Footer />
     </div>
   )

@@ -4,6 +4,7 @@ import Title from './Title'
 import ProductItem from './ProductItem'
 import { Link } from 'react-router-dom'
 import LoadingSpinner from './LoadingSpinner'
+import FadeIn, { FadeInItem } from './FadeIn'
 
 const Exclusive = () => {
   const { products, loading } = useContext(ShopContext)
@@ -14,28 +15,42 @@ const Exclusive = () => {
   if (top.length === 0) return null
 
   return (
-    <div className='my-10'>
-      <div className='text-center py-8 text-3xl'>
-        <Title text1={'EXCLUSIVE'} text2={'PICKS'} />
-        <p className='w-3/4 m-auto text-xs sm:text-sm md:text-base text-gray-600'>
-          Handpicked exclusive items available only here.
-        </p>
-      </div>
+    <section className='py-24 bg-brand-black text-white relative overflow-hidden'>
+      {/* Background decoration */}
+      <div className="absolute -top-[20%] -right-[10%] w-[50%] h-[50%] rounded-full bg-brand-gold/10 blur-[100px]"></div>
+      <div className="absolute -bottom-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-brand-gold/10 blur-[100px]"></div>
 
-      <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 gap-y-6'>
-        {top.map((item, idx) => (
-          <ProductItem key={idx} id={item._id} image={item.image} name={item.name} price={item.price} />
-        ))}
-      </div>
-
-      {exclusive.length > 4 && (
-        <div className='text-center mt-6'>
-          <Link to='/exclusive' className='inline-block px-6 py-2 border border-black hover:bg-black hover:text-white transition'>
-            See all exclusive items
-          </Link>
+      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10'>
+        <div className='flex flex-col items-center mb-16'>
+          <Title text1='EXCLUSIVE' text2='PICKS' centered light />
+          <p className='text-neutral-400 text-center max-w-2xl mt-4'>
+            Handpicked premium items available only to our exclusive members.
+          </p>
         </div>
-      )}
-    </div>
+
+        <FadeIn stagger={0.1}>
+          <div className='grid grid-cols-2 md:grid-cols-4 gap-6'>
+            {top.map((item, idx) => (
+              <FadeInItem key={idx}>
+                {/* ProductItem itself handles dark/light context decently, 
+                    but we wrap it in a div that ensures it stands out */}
+                <div className="bg-white rounded-xl overflow-hidden p-2 pb-0 h-full">
+                    <ProductItem id={item._id} image={item.image} name={item.name} price={item.price} />
+                </div>
+              </FadeInItem>
+            ))}
+          </div>
+        </FadeIn>
+
+        {exclusive.length > 4 && (
+          <div className='mt-16 flex justify-center'>
+            <Link to='/exclusive' className='btn-gold'>
+              Discover More
+            </Link>
+          </div>
+        )}
+      </div>
+    </section>
   )
 }
 

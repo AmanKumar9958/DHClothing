@@ -4,7 +4,7 @@ import { assets } from '../assets/assets';
 import Title from '../components/Title';
 import ProductItem from '../components/ProductItem';
 import LoadingSpinner from '../components/LoadingSpinner';
-import FadeIn from '../components/FadeIn';
+import FadeIn, { FadeInItem } from '../components/FadeIn';
 import { useLocation } from 'react-router-dom';
 
 const Collection = () => {
@@ -18,70 +18,61 @@ const Collection = () => {
   const location = useLocation();
 
   useEffect(() => {
-    if (location.state && location.state.subCategory) {
-      setSubCategory([location.state.subCategory]);
+    if (location.state) {
+      if (location.state.subCategory) {
+        setSubCategory([location.state.subCategory]);
+      }
+      if (location.state.category) {
+        setCategory([location.state.category]);
+      }
     }
   }, [location.state])
 
   const toggleCategory = (e) => {
-
     if (category.includes(e.target.value)) {
         setCategory(prev=> prev.filter(item => item !== e.target.value))
-    }
-    else{
+    } else {
       setCategory(prev => [...prev,e.target.value])
     }
-
   }
 
   const toggleSubCategory = (e) => {
-
     if (subCategory.includes(e.target.value)) {
       setSubCategory(prev=> prev.filter(item => item !== e.target.value))
-    }
-    else{
+    } else {
       setSubCategory(prev => [...prev,e.target.value])
     }
   }
 
   const applyFilter = useCallback(() => {
-
     let productsCopy = products.slice();
 
     if (showSearch && search) {
       productsCopy = productsCopy.filter(item => item.name.toLowerCase().includes(search.toLowerCase()))
     }
-
     if (category.length > 0) {
       productsCopy = productsCopy.filter(item => category.includes(item.category));
     }
-
     if (subCategory.length > 0 ) {
       productsCopy = productsCopy.filter(item => subCategory.includes(item.subCategory))
     }
 
     setFilterProducts(productsCopy)
-
   }, [products, showSearch, search, category, subCategory])
 
   const sortProduct = useCallback(() => {
-
     let fpCopy = filterProducts.slice();
-
     switch (sortType) {
       case 'low-high':
         setFilterProducts(fpCopy.sort((a,b)=>(a.price - b.price)));
         break;
-
       case 'high-low':
         setFilterProducts(fpCopy.sort((a,b)=>(b.price - a.price)));
         break;
-
       default:
         applyFilter();
         break;
     }
-
   }, [filterProducts, sortType, applyFilter])
 
   useEffect(()=>{
@@ -93,88 +84,121 @@ const Collection = () => {
   },[sortProduct])
 
   return (
-    <FadeIn>
-      <div className='flex flex-col sm:flex-row gap-1 sm:gap-10 pt-10 border-t'>
-        
-        {/* Filter Options */}
-        <div className='min-w-60'>
-          <p onClick={()=>setShowFilter(!showFilter)} className='my-2 text-xl flex items-center cursor-pointer gap-2'>FILTERS
-            <img className={`h-3 sm:hidden ${showFilter ? 'rotate-90' : ''}`} src={assets.dropdown_icon} alt="" />
-          </p>
-          {/* Category Filter */}
-          <div className={`border border-gray-300 pl-5 py-3 mt-6 ${showFilter ? '' :'hidden'} sm:block`}>
-            <p className='mb-3 text-sm font-medium'>CATEGORIES</p>
-            <div className='flex flex-col gap-2 text-sm font-light text-gray-700'>
-              <p className='flex gap-2'>
-                <input className='w-3' type="checkbox" value={'Men'} onChange={toggleCategory} checked={category.includes('Men')}/> Men
-              </p>
-              <p className='flex gap-2'>
-                <input className='w-3' type="checkbox" value={'Women'} onChange={toggleCategory} checked={category.includes('Women')}/> Women
-              </p>
-              <p className='flex gap-2'>
-                <input className='w-3' type="checkbox" value={'Kids'} onChange={toggleCategory} checked={category.includes('Kids')}/> Kids
-              </p>
-            </div>
-          </div>
-          {/* SubCategory Filter */}
-          <div className={`border border-gray-300 pl-5 py-3 my-5 ${showFilter ? '' :'hidden'} sm:block`}>
-            <p className='mb-3 text-sm font-medium'>TYPE</p>
-            <div className='flex flex-col gap-2 text-sm font-light text-gray-700'>
-              <p className='flex gap-2'>
-                <input className='w-3 hover:cursor-default' type="checkbox" value={'Topwear'} onChange={toggleSubCategory} checked={subCategory.includes('Topwear')}/> Topwear
-              </p>
-              <p className='flex gap-2'>
-                <input className='w-3 hover:cursor-default' type="checkbox" value={'Bottomwear'} onChange={toggleSubCategory} checked={subCategory.includes('Bottomwear')}/> Bottomwear
-              </p>
-              <p className='flex gap-2'>
-                <input className='w-3 hover:cursor-default' type="checkbox" value={'Winterwear'} onChange={toggleSubCategory} checked={subCategory.includes('Winterwear')}/> Winterwear
-              </p>
-              <p className='flex gap-2'>
-                <input className='w-3 hover:cursor-default' type="checkbox" value={'Hoodie'} onChange={toggleSubCategory} checked={subCategory.includes('Hoodie')}/> Hoodie
-              </p>
-              <p className='flex gap-2'>
-                <input className='w-3 hover:cursor-default' type="checkbox" value={'Oversize'} onChange={toggleSubCategory} checked={subCategory.includes('Oversize')}/> Oversize
-              </p>
-              <p className='flex gap-2'>
-                <input className='w-3 hover:cursor-default' type="checkbox" value={'Regular fit'} onChange={toggleSubCategory} checked={subCategory.includes('Regular fit')}/> Regular fit
-              </p>
-            </div>
-          </div>
+    <div className='min-h-screen bg-brand-cream'>
+        {/* Header Banner */}
+        <div className='bg-brand-black py-16 px-4 text-center'>
+            <h1 className='font-display text-white text-4xl md:text-5xl mb-4'>The Collection</h1>
+            <p className='text-neutral-400 text-body-sm md:text-base max-w-2xl mx-auto'>
+                Curated styles for the modern wardrobe. Filter by category, fit, or style to find your perfect match.
+            </p>
         </div>
 
-        {/* Right Side */}
-        <div className='flex-1'>
+        <div className='max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-12'>
+            <div className='flex flex-col lg:flex-row gap-8 lg:gap-12'>
+                
+                {/* Filter Sidebar */}
+                <div className='lg:w-64 flex-shrink-0'>
+                    <div className='sticky top-28 bg-white p-6 rounded-2xl shadow-soft border border-neutral-100'>
+                        <div 
+                            onClick={()=>setShowFilter(!showFilter)} 
+                            className='flex items-center justify-between cursor-pointer lg:cursor-default mb-6'
+                        >
+                            <h2 className='font-display text-xl font-semibold'>Filters</h2>
+                            <svg xmlns="http://www.w3.org/2000/svg" className={`w-5 h-5 text-neutral-500 lg:hidden transition-transform ${showFilter ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                        </div>
+                        
+                        <div className={`space-y-8 ${showFilter ? 'block' : 'hidden'} lg:block`}>
+                            {/* Categories */}
+                            <div>
+                                <h3 className='text-body-sm font-semibold text-brand-black mb-4 uppercase tracking-wider'>Categories</h3>
+                                <div className='flex flex-col gap-3'>
+                                    {['Men', 'Women', 'Kids'].map((cat) => (
+                                        <label key={cat} className='flex items-center gap-3 cursor-pointer group'>
+                                            <input 
+                                                type="checkbox" 
+                                                value={cat} 
+                                                onChange={toggleCategory} 
+                                                checked={category.includes(cat)}
+                                            />
+                                            <span className='text-neutral-600 group-hover:text-brand-black transition-colors'>{cat}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                            
+                            {/* Type */}
+                            <div>
+                                <h3 className='text-body-sm font-semibold text-brand-black mb-4 uppercase tracking-wider'>Fit & Style</h3>
+                                <div className='flex flex-col gap-3'>
+                                    {['Topwear', 'Bottomwear', 'Winterwear', 'Hoodie', 'Oversize', 'Regular fit'].map((sub) => (
+                                        <label key={sub} className='flex items-center gap-3 cursor-pointer group'>
+                                            <input 
+                                                type="checkbox" 
+                                                value={sub} 
+                                                onChange={toggleSubCategory} 
+                                                checked={subCategory.includes(sub)}
+                                            />
+                                            <span className='text-neutral-600 group-hover:text-brand-black transition-colors'>{sub}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-          <div className='flex justify-between text-base sm:text-2xl mb-4'>
-              <Title text1={'ALL'} text2={'COLLECTIONS'} />
-              {/* Product Sort */}
-              <select onChange={(e)=>setSortType(e.target.value)} className='border-2 border-gray-300 text-sm px-2'>
-                <option value="relavent">Sort by: Relevant</option>
-                <option value="low-high">Sort by: Low to High</option>
-                <option value="high-low">Sort by: High to Low</option>
-              </select>
-          </div>
+                {/* Right Side: Products */}
+                <div className='flex-1'>
+                    <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 bg-white p-4 rounded-xl shadow-soft border border-neutral-100'>
+                        <div className='text-neutral-500 text-sm font-medium'>
+                            Showing <span className='text-brand-black'>{filterProducts.length}</span> results
+                        </div>
+                        
+                        <div className='flex items-center gap-3 relative w-full sm:w-auto'>
+                            <span className='text-sm text-neutral-500 whitespace-nowrap'>Sort by:</span>
+                            <div className='relative w-full sm:w-48'>
+                                <select 
+                                    onChange={(e)=>setSortType(e.target.value)} 
+                                    className='w-full appearance-none bg-neutral-50 border border-neutral-200 text-brand-black text-sm rounded-lg pl-4 pr-10 py-2.5 outline-none focus:border-brand-black transition-colors cursor-pointer'
+                                >
+                                    <option value="relavent">Relevant</option>
+                                    <option value="low-high">Price: Low to High</option>
+                                    <option value="high-low">Price: High to Low</option>
+                                </select>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-500 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                            </div>
+                        </div>
+                    </div>
 
-          {/* Map Products */}
-          {loading ? (
-            <LoadingSpinner />
-          ) : filterProducts.length === 0 ? (
-            <div className="flex justify-center items-center h-[50vh] w-full">
-               <p className="text-xl text-gray-500">No items available</p>
+                    {/* Products Grid */}
+                    {loading ? (
+                        <div className='h-96 flex items-center justify-center bg-white rounded-2xl shadow-soft border border-neutral-100'>
+                            <LoadingSpinner />
+                        </div>
+                    ) : filterProducts.length === 0 ? (
+                        <div className="flex flex-col justify-center items-center h-96 bg-white rounded-2xl shadow-soft border border-neutral-100 p-8 text-center">
+                            <div className='w-20 h-20 bg-neutral-50 rounded-full flex items-center justify-center mb-4'>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-10 h-10 text-neutral-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            </div>
+                            <h3 className='font-display text-xl font-semibold mb-2'>No products found</h3>
+                            <p className="text-neutral-500 max-w-sm">We couldn't find any items matching your current filters. Try adjusting them to see more results.</p>
+                            <button onClick={() => { setCategory([]); setSubCategory([]); }} className='btn-secondary mt-6'>Clear All Filters</button>
+                        </div>
+                    ) : (
+                        <FadeIn stagger={0.05} direction="up" distance={30}>
+                            <div className='grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6'>
+                            {filterProducts.map((item, index)=>(
+                                <FadeInItem key={index}>
+                                    <ProductItem name={item.name} id={item._id} price={item.price} image={item.image} />
+                                </FadeInItem>
+                            ))}
+                            </div>
+                        </FadeIn>
+                    )}
+                </div>
             </div>
-          ) : (
-            <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-6'>
-              {
-                filterProducts.map((item,index)=>(
-                  <ProductItem key={index} name={item.name} id={item._id} price={item.price} image={item.image} />
-                ))
-              }
-            </div>
-          )}
         </div>
-
-      </div>
-    </FadeIn>
+    </div>
   )
 }
 

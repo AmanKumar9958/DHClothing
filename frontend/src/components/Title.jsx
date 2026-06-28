@@ -1,10 +1,13 @@
 import React from 'react'
 
-const Title = ({text1,text2}) => {
+const Title = ({ text1, text2, centered = false, light = false }) => {
   return (
-    <div className='inline-flex gap-2 items-center mb-3'>
-      <p className='text-gray-500'>{text1} <span className='text-gray-700 font-medium'>{text2}</span></p>
-      <p className='w-8 sm:w-12 h-[1px] sm:h-[2px] bg-gray-700'></p>
+    <div className={`flex items-center gap-3 mb-4 ${centered ? 'justify-center' : ''}`}>
+      <h2 className={`font-display tracking-wide ${light ? 'text-white' : ''}`}>
+        <span className={`font-normal ${light ? 'text-neutral-300' : 'text-neutral-400'}`}>{text1}</span>{' '}
+        <span className={`font-semibold ${light ? 'text-white' : 'text-brand-black'}`}>{text2}</span>
+      </h2>
+      <span className={`hidden sm:block w-10 h-[2px] ${light ? 'bg-white/30' : 'bg-brand-gold'}`}></span>
     </div>
   )
 }

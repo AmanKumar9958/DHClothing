@@ -4,6 +4,7 @@ import { ShopContext } from '../context/ShopContext'
 import Title from './Title';
 import ProductItem from './ProductItem';
 import LoadingSpinner from './LoadingSpinner';
+import FadeIn, { FadeInItem } from './FadeIn';
 
 const RelatedProducts = ({category,subCategory}) => {
 
@@ -13,34 +14,35 @@ const RelatedProducts = ({category,subCategory}) => {
   useEffect(()=>{
 
     if (products.length > 0) {
-            
       let productsCopy = products.slice();
-            
-            productsCopy = productsCopy.filter((item) => category === item.category);
-            productsCopy = productsCopy.filter((item) => subCategory === item.subCategory);
+      productsCopy = productsCopy.filter((item) => category === item.category);
+      productsCopy = productsCopy.filter((item) => subCategory === item.subCategory);
       productsCopy = productsCopy.filter((item) => !item.exclusive);
 
-            setRelated(productsCopy.slice(0,5));
-        }
+      setRelated(productsCopy.slice(0,4));
+    }
         
   },[products, category, subCategory])
 
+  if (loading) return null;
+  if (related.length === 0) return null;
+
   return (
-    <div className='my-24'>
-      <div className=' text-center text-3xl py-2'>
-        <Title text1={'RELATED'} text2={"PRODUCTS"} />
+    <div className='w-full'>
+      <div className='flex flex-col items-center mb-12'>
+        <Title text1='RELATED' text2='PRODUCTS' centered />
+        <p className='text-neutral-500 text-sm mt-2'>Explore similar styles you might like.</p>
       </div>
 
-      {loading ? (
-        <LoadingSpinner />
-      ) : (
-        <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 gap-y-6'>
+      <FadeIn stagger={0.1}>
+        <div className='grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6'>
           {related.map((item,index)=>(
-            <ProductItem key={index} id={item._id} name={item.name} price={item.price} image={item.image}/>
+            <FadeInItem key={index}>
+                <ProductItem id={item._id} name={item.name} price={item.price} image={item.image}/>
+            </FadeInItem>
           ))}
         </div>
-      )}
-
+      </FadeIn>
     </div>
   )
 }

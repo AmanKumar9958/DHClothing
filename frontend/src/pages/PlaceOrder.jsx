@@ -5,21 +5,14 @@ import { ShopContext } from '../context/ShopContext'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import FadeIn from '../components/FadeIn'
+import { assets } from '../assets/assets'
 
 const PlaceOrder = () => {
 
     const [method, setMethod] = useState('razorpay');
-    const { navigate, backendUrl, token, cartItems, setCartItems, products, currency, applyCoupon, coupon, discountAmount, removeCoupon, getCartAmount } = useContext(ShopContext);
+    const { navigate, backendUrl, token, cartItems, setCartItems, products, currency, applyCoupon, coupon, discountAmount, removeCoupon } = useContext(ShopContext);
     const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        email: '',
-        street: '',
-        city: '',
-        state: '',
-        zipcode: '',
-        country: '',
-        phone: ''
+        firstName: '', lastName: '', email: '', street: '', city: '', state: '', zipcode: '', country: '', phone: ''
     })
     const [couponCodeInput, setCouponCodeInput] = useState('')
     const [couponLoading, setCouponLoading] = useState(false)
@@ -30,7 +23,6 @@ const PlaceOrder = () => {
         setFormData(data => ({ ...data, [name]: value }))
     }
 
-    // Calculate shipping fee based on hoodie rules
     let hoodieCount = 0;
     for (const items in cartItems) {
         const [productId] = items.split('::');
@@ -51,12 +43,6 @@ const PlaceOrder = () => {
         shippingFee = method === 'cod' ? 79 : 0;
     }
 
-    // Clear applied coupon when payment method changes (amount basis differs)
-    // Users can re-apply so totals stay consistent with fee
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    
-
-    // Build order items and compute subtotal from cart + products
     const buildOrderItemsAndSubtotal = () => {
         let orderItems = []
         let subtotal = 0
@@ -101,9 +87,7 @@ const PlaceOrder = () => {
             order_id: order.id,
             receipt: order.receipt,
             handler: async (response) => {
-                console.log(response)
                 try {
-                    
                     const { data } = await axios.post(backendUrl + '/api/order/verifyRazorpay',response,{headers:{token}})
                     if (data.success) {
                         navigate('/orders')
@@ -134,10 +118,7 @@ const PlaceOrder = () => {
                 couponCode: coupon ? coupon.code : null
             }
             
-
             switch (method) {
-
-                // API Calls for COD
                 case 'cod': {
                     const response = await axios.post(backendUrl + '/api/order/place',orderData,{headers:{token}})
                     if (response.data.success) {
@@ -148,7 +129,6 @@ const PlaceOrder = () => {
                     }
                     break;
                 }
-
                 case 'stripe': {
                     const responseStripe = await axios.post(backendUrl + '/api/order/stripe',orderData,{headers:{token}})
                     if (responseStripe.data.success) {
@@ -159,21 +139,16 @@ const PlaceOrder = () => {
                     }
                     break;
                 }
-
                 case 'razorpay': {
                     const responseRazorpay = await axios.post(backendUrl + '/api/order/razorpay', orderData, {headers:{token}})
                     if (responseRazorpay.data.success) {
                         initPay(responseRazorpay.data.order)
                     }
-
                     break;
                 }
-
                 default:
                     break;
             }
-
-
         } catch (error) {
             console.log(error)
             toast.error(error.message)
@@ -182,81 +157,170 @@ const PlaceOrder = () => {
 
 
     return (
-        <FadeIn>
-            <form onSubmit={onSubmitHandler} className='flex flex-col sm:flex-row justify-between gap-4 pt-5 sm:pt-14 min-h-[80vh] border-t'>
-                {/* ------------- Left Side ---------------- */}
-                <div className='flex flex-col gap-4 w-full sm:max-w-[480px]'>
-
-                    <div className='text-xl sm:text-2xl my-3'>
-                        <Title text1={'DELIVERY'} text2={'INFORMATION'} />
-                    </div>
-                    <div className='flex gap-3'>
-                        <input required onChange={onChangeHandler} name='firstName' value={formData.firstName} className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" placeholder='First name' />
-                        <input required onChange={onChangeHandler} name='lastName' value={formData.lastName} className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" placeholder='Last name' />
-                    </div>
-                    <input required onChange={onChangeHandler} name='email' value={formData.email} className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="email" placeholder='Email address' />
-                    <input required onChange={onChangeHandler} name='street' value={formData.street} className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" placeholder='Street' />
-                    <div className='flex gap-3'>
-                        <input required onChange={onChangeHandler} name='city' value={formData.city} className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" placeholder='City' />
-                        <input onChange={onChangeHandler} name='state' value={formData.state} className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" placeholder='State' />
-                    </div>
-                    <div className='flex gap-3'>
-                        <input required onChange={onChangeHandler} name='zipcode' value={formData.zipcode} className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="number" placeholder='Zipcode' />
-                        <input required onChange={onChangeHandler} name='country' value={formData.country} className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="text" placeholder='Country' />
-                    </div>
-                    <input required onChange={onChangeHandler} name='phone' value={formData.phone} className='border border-gray-300 rounded py-1.5 px-3.5 w-full' type="number" placeholder='Phone' />
-                </div>
-
-                {/* ------------- Right Side ------------------ */}
-                <div className='mt-8'>
-
-                    <div className='mt-8 min-w-80'>
-                        <CartTotal deliveryFee={shippingFee} />
+        <div className='min-h-screen bg-brand-cream pb-24'>
+            <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12'>
+                <FadeIn>
+                    <div className='text-3xl sm:text-4xl mb-8 font-medium'>
+                        <Title text1={'SECURE'} text2={'CHECKOUT'} />
                     </div>
 
-                    <div className='mt-12'>
-                        <Title text1={'PAYMENT'} text2={'METHOD'} />
-                        <div className='mt-4 mb-4'>
-                            <label className='text-sm mr-2'>Have a coupon?</label>
-                            <input value={couponCodeInput} onChange={e=>setCouponCodeInput(e.target.value)} className='border p-2 mr-2' placeholder='Enter coupon code' />
-                            <button type='button' onClick={async ()=>{
-                                if (!couponCodeInput) return toast.error('Enter coupon code')
-                                setCouponLoading(true)
-                                await applyCoupon(couponCodeInput)
-                                setCouponLoading(false)
-                            }} className='bg-black text-white px-3 py-1 text-sm'>{couponLoading ? 'Checking...' : 'Apply'}</button>
-
-                            {coupon && (
-                                <div className='mt-2 text-sm text-green-600'>
-                                    Applied {coupon.code}: -{currency}{discountAmount}
-                                    <button type='button' onClick={()=>{ removeCoupon(); setCouponCodeInput('') }} className='ml-2 text-red-500 underline text-xs'>Remove</button>
+                    <form onSubmit={onSubmitHandler} className='flex flex-col lg:flex-row gap-10 lg:gap-12'>
+                        
+                        {/* ------------- Left Side: Address ---------------- */}
+                        <div className='lg:w-2/3'>
+                            <div className='bg-white rounded-3xl p-6 sm:p-10 shadow-soft border border-neutral-100'>
+                                <h2 className='font-display text-xl sm:text-2xl font-medium mb-8 text-brand-black flex items-center gap-3'>
+                                    <span className='flex items-center justify-center w-8 h-8 rounded-full bg-brand-black text-white text-sm'>1</span>
+                                    Delivery Information
+                                </h2>
+                                
+                                <div className='grid grid-cols-1 md:grid-cols-2 gap-5'>
+                                    <div className='space-y-1.5'>
+                                        <label className='text-sm font-medium text-neutral-700 ml-1'>First Name <span className='text-red-500'>*</span></label>
+                                        <input required onChange={onChangeHandler} name='firstName' value={formData.firstName} className='w-full border border-neutral-200 rounded-xl px-4 py-3 bg-neutral-50 focus:bg-white transition-colors' type="text" placeholder='John' />
+                                    </div>
+                                    <div className='space-y-1.5'>
+                                        <label className='text-sm font-medium text-neutral-700 ml-1'>Last Name <span className='text-red-500'>*</span></label>
+                                        <input required onChange={onChangeHandler} name='lastName' value={formData.lastName} className='w-full border border-neutral-200 rounded-xl px-4 py-3 bg-neutral-50 focus:bg-white transition-colors' type="text" placeholder='Doe' />
+                                    </div>
+                                    <div className='space-y-1.5 md:col-span-2'>
+                                        <label className='text-sm font-medium text-neutral-700 ml-1'>Email Address <span className='text-red-500'>*</span></label>
+                                        <input required onChange={onChangeHandler} name='email' value={formData.email} className='w-full border border-neutral-200 rounded-xl px-4 py-3 bg-neutral-50 focus:bg-white transition-colors' type="email" placeholder='john.doe@example.com' />
+                                    </div>
+                                    <div className='space-y-1.5 md:col-span-2'>
+                                        <label className='text-sm font-medium text-neutral-700 ml-1'>Street Address <span className='text-red-500'>*</span></label>
+                                        <input required onChange={onChangeHandler} name='street' value={formData.street} className='w-full border border-neutral-200 rounded-xl px-4 py-3 bg-neutral-50 focus:bg-white transition-colors' type="text" placeholder='123 Main St, Apt 4B' />
+                                    </div>
+                                    <div className='space-y-1.5'>
+                                        <label className='text-sm font-medium text-neutral-700 ml-1'>City <span className='text-red-500'>*</span></label>
+                                        <input required onChange={onChangeHandler} name='city' value={formData.city} className='w-full border border-neutral-200 rounded-xl px-4 py-3 bg-neutral-50 focus:bg-white transition-colors' type="text" placeholder='New York' />
+                                    </div>
+                                    <div className='space-y-1.5'>
+                                        <label className='text-sm font-medium text-neutral-700 ml-1'>State / Province</label>
+                                        <input onChange={onChangeHandler} name='state' value={formData.state} className='w-full border border-neutral-200 rounded-xl px-4 py-3 bg-neutral-50 focus:bg-white transition-colors' type="text" placeholder='NY' />
+                                    </div>
+                                    <div className='space-y-1.5'>
+                                        <label className='text-sm font-medium text-neutral-700 ml-1'>ZIP / Postal Code <span className='text-red-500'>*</span></label>
+                                        <input required onChange={onChangeHandler} name='zipcode' value={formData.zipcode} className='w-full border border-neutral-200 rounded-xl px-4 py-3 bg-neutral-50 focus:bg-white transition-colors' type="text" placeholder='10001' />
+                                    </div>
+                                    <div className='space-y-1.5'>
+                                        <label className='text-sm font-medium text-neutral-700 ml-1'>Country <span className='text-red-500'>*</span></label>
+                                        <input required onChange={onChangeHandler} name='country' value={formData.country} className='w-full border border-neutral-200 rounded-xl px-4 py-3 bg-neutral-50 focus:bg-white transition-colors' type="text" placeholder='United States' />
+                                    </div>
+                                    <div className='space-y-1.5 md:col-span-2'>
+                                        <label className='text-sm font-medium text-neutral-700 ml-1'>Phone Number <span className='text-red-500'>*</span></label>
+                                        <input required onChange={onChangeHandler} name='phone' value={formData.phone} className='w-full border border-neutral-200 rounded-xl px-4 py-3 bg-neutral-50 focus:bg-white transition-colors' type="tel" placeholder='+1 (555) 000-0000' />
+                                    </div>
                                 </div>
-                            )}
-                        </div>
-                        {/* --------------- Payment Method Selection ------------- */}
-                        <div className='flex gap-3 flex-col lg:flex-row'>
-                            {/* <div onClick={() => setMethod('stripe')} className='flex items-center gap-3 border p-2 px-3 cursor-pointer'>
-                                <p className={`min-w-3.5 h-3.5 border rounded-full ${method === 'stripe' ? 'bg-green-400' : ''}`}></p>
-                                <img className='h-5 mx-4' src={assets.stripe_logo} alt="" />
-                            </div> */}
-                            <div onClick={() => { setMethod('razorpay'); }} className='flex items-center gap-3 border p-2 px-3 cursor-pointer'>
-                                <p className={`min-w-3.5 h-3.5 border rounded-full ${method === 'razorpay' ? 'bg-green-400' : ''}`}></p>
-                                {/* <img className='h-5 mx-4' src={assets.razorpay_logo} alt="" /> */}
-                                <p className='text-gray-500 text-sm font-medium mx-4'>PAY ONLINE</p>
-                            </div>
-                            <div onClick={() => { setMethod('cod'); }} className='flex items-center gap-3 border p-2 px-3 cursor-pointer'>
-                                <p className={`min-w-3.5 h-3.5 border rounded-full ${method === 'cod' ? 'bg-green-400' : ''}`}></p>
-                                <p className='text-gray-500 text-sm font-medium mx-4'>CASH ON DELIVERY</p>
                             </div>
                         </div>
 
-                        <div className='w-full text-end mt-8'>
-                            <button type='submit' className='bg-black text-white px-16 py-3 text-sm'>PLACE ORDER</button>
+                        {/* ------------- Right Side: Payment & Totals ------------------ */}
+                        <div className='lg:w-1/3'>
+                            <div className='bg-white rounded-3xl p-6 shadow-soft border border-neutral-100 flex flex-col gap-8 sticky top-28'>
+                                
+                                {/* Totals Component */}
+                                <div>
+                                    <CartTotal deliveryFee={shippingFee} />
+                                </div>
+
+                                {/* Promo Code */}
+                                <div>
+                                    <div className='flex items-center justify-between mb-2'>
+                                        <label className='text-sm font-medium text-brand-black'>Gift card or discount code</label>
+                                    </div>
+                                    <div className='flex items-center gap-2'>
+                                        <input 
+                                            value={couponCodeInput} 
+                                            onChange={e=>setCouponCodeInput(e.target.value)} 
+                                            className='flex-1 border border-neutral-200 rounded-lg px-4 py-2.5 outline-none focus:border-brand-black transition-colors text-sm uppercase' 
+                                            placeholder='Enter code' 
+                                        />
+                                        <button 
+                                            type='button' 
+                                            onClick={async ()=>{
+                                                if (!couponCodeInput) return toast.error('Enter coupon code')
+                                                setCouponLoading(true)
+                                                await applyCoupon(couponCodeInput)
+                                                setCouponLoading(false)
+                                            }} 
+                                            className='bg-brand-black text-white px-4 py-2.5 rounded-lg text-sm font-medium hover:bg-brand-charcoal transition-colors'
+                                        >
+                                            {couponLoading ? '...' : 'Apply'}
+                                        </button>
+                                    </div>
+                                    {coupon && (
+                                        <div className='mt-2 flex items-center justify-between px-3 py-2 bg-green-50 border border-green-100 rounded-lg text-xs'>
+                                            <span className='text-green-700 font-medium'>Code {coupon.code} applied (-{currency}{discountAmount})</span>
+                                            <button type='button' onClick={()=>{ removeCoupon(); setCouponCodeInput('') }} className='text-red-500 hover:text-red-600 underline'>Remove</button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Payment Methods */}
+                                <div>
+                                    <h3 className='font-display text-xl font-medium mb-4 text-brand-black flex items-center gap-3'>
+                                        <span className='flex items-center justify-center w-7 h-7 rounded-full bg-brand-black text-white text-xs'>2</span>
+                                        Payment Method
+                                    </h3>
+                                    
+                                    <div className='flex flex-col gap-3'>
+                                        {/* Razorpay Option */}
+                                        <label className={`relative flex items-center justify-between p-4 cursor-pointer rounded-xl border-2 transition-all ${method === 'razorpay' ? 'border-brand-black bg-neutral-50' : 'border-neutral-200 hover:border-neutral-300'}`}>
+                                            <div className='flex items-center gap-3'>
+                                                <input 
+                                                    type="radio" 
+                                                    name="paymentMethod" 
+                                                    checked={method === 'razorpay'} 
+                                                    onChange={() => setMethod('razorpay')}
+                                                    className="w-4 h-4 text-brand-black bg-gray-100 border-gray-300 focus:ring-brand-black focus:ring-2" 
+                                                />
+                                                <span className='font-medium text-brand-black'>Pay Online securely</span>
+                                            </div>
+                                            <div className="flex gap-1">
+                                                 <img className='h-5 opacity-70' src={assets.razorpay_logo} alt="Razorpay" />
+                                            </div>
+                                        </label>
+
+                                        {/* COD Option */}
+                                        <label className={`relative flex items-center justify-between p-4 cursor-pointer rounded-xl border-2 transition-all ${method === 'cod' ? 'border-brand-black bg-neutral-50' : 'border-neutral-200 hover:border-neutral-300'}`}>
+                                            <div className='flex items-center gap-3'>
+                                                <input 
+                                                    type="radio" 
+                                                    name="paymentMethod" 
+                                                    checked={method === 'cod'} 
+                                                    onChange={() => setMethod('cod')}
+                                                    className="w-4 h-4 text-brand-black bg-gray-100 border-gray-300 focus:ring-brand-black focus:ring-2" 
+                                                />
+                                                <div className='flex flex-col'>
+                                                    <span className='font-medium text-brand-black'>Cash on Delivery</span>
+                                                    <span className='text-xs text-neutral-500'>Pay when you receive the order</span>
+                                                </div>
+                                            </div>
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M12 12h.01"/><path d="M17 12h.01"/><path d="M7 12h.01"/></svg>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div className='pt-4 border-t border-neutral-100'>
+                                    <button type='submit' className='btn-primary w-full py-4 text-base rounded-xl shadow-soft group relative overflow-hidden'>
+                                        <span className='relative z-10 flex items-center justify-center gap-2'>
+                                            Complete Order
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 group-hover:translate-x-1 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                                        </span>
+                                    </button>
+                                    <p className='text-center text-xs text-neutral-400 mt-4 flex items-center justify-center gap-1.5'>
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                        Secure encrypted checkout
+                                    </p>
+                                </div>
+
+                            </div>
                         </div>
-                    </div>
-                </div>
-            </form>
-        </FadeIn>
+                    </form>
+                </FadeIn>
+            </div>
+        </div>
     )
 }
 
