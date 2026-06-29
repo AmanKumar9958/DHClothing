@@ -101,6 +101,7 @@ const Product = () => {
                                             className='w-full h-full object-cover'
                                             skeletonClass="w-full h-full"
                                             alt={`Thumbnail ${index + 1}`}
+                                            width="200"
                                         />
                                     </button>
                                 ))}
@@ -113,6 +114,7 @@ const Product = () => {
                                     src={image || (gallery.length > 0 ? gallery[0] : assets.placeholder)} 
                                     alt={productData.name} 
                                     skeletonClass="w-full h-full"
+                                    width="1000"
                                 />
                             </div>
                         </div>

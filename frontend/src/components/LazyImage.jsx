@@ -1,8 +1,29 @@
 import React, { useState } from 'react';
 
-const LazyImage = ({ src, alt, className, skeletonClass = "w-full h-full min-h-[200px]", wrapperClassName, onClick, ...props }) => {
+const optimizeCloudinaryUrl = (url, width) => {
+  if (typeof url !== 'string' || !url.includes('res.cloudinary.com')) return url;
+  
+  // We want to insert transformations after "upload/"
+  const uploadIndex = url.indexOf('upload/');
+  if (uploadIndex === -1) return url;
+  
+  const insertionPoint = uploadIndex + 7;
+  
+  // Check if transformations are already present (e.g. upload/q_auto...)
+  const nextPart = url.slice(insertionPoint, insertionPoint + 2);
+  if (nextPart === 'q_' || nextPart === 'w_' || nextPart === 'f_' || nextPart === 'c_') return url;
+  
+  const transformations = ['q_auto', 'f_auto'];
+  if (width) transformations.push(`w_${width}`);
+  
+  return url.slice(0, insertionPoint) + transformations.join(',') + '/' + url.slice(insertionPoint);
+};
+
+const LazyImage = ({ src, alt, className, skeletonClass = "w-full h-full min-h-[200px]", wrapperClassName, onClick, width, ...props }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+  
+  const optimizedSrc = optimizeCloudinaryUrl(src, width);
 
   return (
     <div 
@@ -20,7 +41,7 @@ const LazyImage = ({ src, alt, className, skeletonClass = "w-full h-full min-h-[
         </div>
       )}
       <img
-        src={src}
+        src={optimizedSrc}
         alt={alt}
         className={`${className} transition-all duration-700 ease-out ${
           isLoaded ? 'opacity-100 scale-100 blur-0' : 'opacity-0 scale-105 blur-sm'

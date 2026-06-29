@@ -20,6 +20,7 @@ const ProductItem = ({ id, image, name, price }) => {
           src={image[0]}
           alt={name}
           skeletonClass="w-full h-full"
+          width="600"
         />
         {/* Hover overlay */}
         <div className='absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-500'></div>
