@@ -99,6 +99,7 @@ const Product = () => {
                                         <LazyImage
                                             src={item}
                                             className='w-full h-full object-cover'
+                                            wrapperClassName='w-full h-full'
                                             skeletonClass="w-full h-full"
                                             alt={`Thumbnail ${index + 1}`}
                                             width="200"
@@ -110,7 +111,8 @@ const Product = () => {
                             {/* Main Image */}
                             <div className='w-full rounded-2xl overflow-hidden bg-neutral-100 img-zoom relative aspect-[3/4] sm:aspect-auto'>
                                 <LazyImage 
-                                    className='w-full h-full object-cover absolute inset-0' 
+                                    className='w-full h-full object-cover absolute inset-0'
+                                    wrapperClassName='w-full h-full'
                                     src={image || (gallery.length > 0 ? gallery[0] : assets.placeholder)} 
                                     alt={productData.name} 
                                     skeletonClass="w-full h-full"

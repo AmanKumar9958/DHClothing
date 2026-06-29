@@ -25,6 +25,12 @@ const LazyImage = ({ src, alt, className, skeletonClass = "w-full h-full min-h-[
   
   const optimizedSrc = optimizeCloudinaryUrl(src, width);
 
+  React.useEffect(() => {
+    setIsLoaded(false);
+    setHasError(false);
+    console.log("LazyImage loading:", optimizedSrc);
+  }, [optimizedSrc]);
+
   return (
     <div 
       className={`relative overflow-hidden ${!isLoaded ? 'bg-neutral-100' : ''} ${wrapperClassName || ''}`}
@@ -41,13 +47,18 @@ const LazyImage = ({ src, alt, className, skeletonClass = "w-full h-full min-h-[
         </div>
       )}
       <img
+        key={optimizedSrc} // Force re-render of img to fire onLoad properly
         src={optimizedSrc}
         alt={alt}
         className={`${className} transition-all duration-700 ease-out ${
           isLoaded ? 'opacity-100 scale-100 blur-0' : 'opacity-0 scale-105 blur-sm'
         }`}
         onLoad={() => setIsLoaded(true)}
-        onError={() => { setHasError(true); setIsLoaded(true); }}
+        onError={() => { 
+          console.error("LazyImage failed to load:", optimizedSrc);
+          setHasError(true); 
+          setIsLoaded(true); 
+        }}
         loading="lazy"
         {...props}
       />
